@@ -23,6 +23,7 @@ use MediaWiki\Skins\Citizen\Components\CitizenComponentSiteStats;
 use MediaWiki\Skins\Citizen\Components\CitizenComponentStickyHeader;
 use MediaWiki\Skins\Citizen\Components\CitizenComponentTableOfContents;
 use MediaWiki\Skins\Citizen\Components\CitizenComponentUserInfo;
+use MediaWiki\Skins\Citizen\Hooks\HookRunner;
 use MediaWiki\Title\Title;
 use MediaWiki\User\UserFactory;
 use MediaWiki\User\UserGroupManager;
@@ -154,6 +155,13 @@ class SkinCitizen extends SkinMustache {
 		return $this->languages;
 	}
 
+	private function getBeforePageHeaderHtml(): string {
+		$html = '';
+		( new HookRunner( $this->getHookContainer() ) )->onCitizenBeforePageHeader( $this, $html );
+
+		return $html;
+	}
+
 	/**
 	 * @inheritDoc
 	 */
@@ -247,6 +255,8 @@ class SkinCitizen extends SkinMustache {
 
 		// TODO: Pass the home icon through the component instead of injecting into logos data
 		$parentData['data-logos']['icon-home'] = 'home';
+
+		$parentData['html-before-page-header'] = $this->getBeforePageHeaderHtml();
 
 		$parentData['toc-enabled'] = !empty( $parentData['data-toc'][ 'array-sections' ] );
 		if ( $parentData['toc-enabled'] ) {

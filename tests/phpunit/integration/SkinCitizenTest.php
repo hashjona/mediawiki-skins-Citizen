@@ -16,7 +16,7 @@ use RequestContext;
 class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 
 	private function createSkinInstance(): SkinCitizen {
-		return new SkinCitizen(
+		$skin = new SkinCitizen(
 			$this->getServiceContainer()->getUserFactory(),
 			$this->getServiceContainer()->getGenderCache(),
 			$this->getServiceContainer()->getUserIdentityLookup(),
@@ -30,6 +30,12 @@ class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 				'name' => 'Citizen',
 			]
 		);
+
+		$skin->setContext(
+			RequestContext::newExtraneousContext( Title::makeTitle( NS_MAIN, 'SkinCitizenTest' ) )
+		);
+
+		return $skin;
 	}
 
 	public function testThemeColorMetaTag(): void {
@@ -143,6 +149,28 @@ class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 		$this->assertContains(
 			'citizen-sections-enabled',
 			$skin->getOptions()['bodyClasses']
+		);
+	}
+
+	public function testBeforePageHeaderHtmlDefaultsToEmptyString(): void {
+		$skin = $this->createSkinInstance();
+
+		$this->assertSame( '', $skin->getTemplateData()['html-before-page-header'] );
+	}
+
+	public function testBeforePageHeaderHookAddsHtml(): void {
+		$this->setTemporaryHook(
+			'CitizenBeforePageHeader',
+			static function ( SkinCitizen $skin, string &$html ): void {
+				$html .= '<div class="citizen-before-page-header-test">Injected</div>';
+			}
+		);
+
+		$skin = $this->createSkinInstance();
+
+		$this->assertSame(
+			'<div class="citizen-before-page-header-test">Injected</div>',
+			$skin->getTemplateData()['html-before-page-header']
 		);
 	}
 }
