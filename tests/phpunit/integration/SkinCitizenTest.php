@@ -38,6 +38,14 @@ class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 		return $skin;
 	}
 
+	private function getSkinHtmlClasses(): string {
+		return $this->createSkinInstance()->getHtmlElementAttributes()['class'];
+	}
+
+	private function getSkinTemplateData(): array {
+		return $this->createSkinInstance()->getTemplateData();
+	}
+
 	public function testThemeColorMetaTag(): void {
 		$this->overrideConfigValues( [
 			'CitizenThemeColor' => '#ffaabb',
@@ -135,6 +143,49 @@ class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 		$this->assertStringNotContainsString( 'skin-theme-clientpref-', $attrs['class'] );
 	}
 
+	public function testConfiguredClientPreferenceDefaultsAffectHtmlClasses(): void {
+		$this->overrideConfigValues( [
+			'CitizenPreferencesDefaults' => [
+				'citizen-feature-custom-width' => 'wide',
+				'citizen-feature-performance-mode' => '0',
+			],
+		] );
+
+		$attrs = $this->getSkinHtmlClasses();
+
+		$this->assertStringContainsString(
+			'citizen-feature-custom-width-clientpref-wide',
+			$attrs
+		);
+		$this->assertStringContainsString(
+			'citizen-feature-performance-mode-clientpref-0',
+			$attrs
+		);
+		$this->assertStringContainsString(
+			'citizen-feature-custom-font-size-clientpref-standard',
+			$attrs
+		);
+	}
+
+	public function testInvalidClientPreferenceDefaultsFallBackToBuiltInValues(): void {
+		$this->overrideConfigValues( [
+			'CitizenPreferencesDefaults' => [
+				'citizen-feature-custom-width' => 'invalid',
+			],
+		] );
+
+		$attrs = $this->getSkinHtmlClasses();
+
+		$this->assertStringContainsString(
+			'citizen-feature-custom-width-clientpref-standard',
+			$attrs
+		);
+		$this->assertStringNotContainsString(
+			'citizen-feature-custom-width-clientpref-invalid',
+			$attrs
+		);
+	}
+
 	public function testCollapsibleSectionsBodyClass(): void {
 		$title = Title::newFromText( 'CollapsibleSectionsTest' );
 		RequestContext::resetMain();
@@ -172,5 +223,93 @@ class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 			'<div class="citizen-before-page-header-test">Injected</div>',
 			$skin->getTemplateData()['html-before-page-header']
 		);
+	}
+
+	public function testTemplateDataExposesEnabledPreferencesFlag(): void {
+		$this->overrideConfigValues( [
+			'CitizenEnablePreferences' => true,
+		] );
+
+		$this->assertTrue( $this->getSkinTemplateData()['is-preferences-enabled'] );
+	}
+
+	public function testTemplateDataExposesDisabledPreferencesFlag(): void {
+		$this->overrideConfigValues( [
+			'CitizenEnablePreferences' => false,
+		] );
+
+		$this->assertFalse( $this->getSkinTemplateData()['is-preferences-enabled'] );
+	}
+
+	public function testTemplateDataExposesConfiguredLogoVisibilityFlags(): void {
+		$this->overrideConfigValues( [
+			'CitizenLogoVisibleIn' => [ 'home', 'footer' ],
+		] );
+
+		$templateData = $this->getSkinTemplateData();
+
+		$this->assertTrue( $templateData['is-logo-visible-in-home'] );
+		$this->assertFalse( $templateData['is-logo-visible-in-drawer'] );
+		$this->assertTrue( $templateData['is-logo-visible-in-footer'] );
+	}
+
+	public function testTemplateDataFallsBackToBuiltInLogoVisibilityDefaults(): void {
+		$this->overrideConfigValues( [
+			'CitizenLogoVisibleIn' => null,
+		] );
+
+		$templateData = $this->getSkinTemplateData();
+
+		$this->assertTrue( $templateData['is-logo-visible-in-home'] );
+		$this->assertTrue( $templateData['is-logo-visible-in-drawer'] );
+		$this->assertTrue( $templateData['is-logo-visible-in-footer'] );
+	}
+
+	public function testTemplateDataExposesConfiguredWordmarkVisibilityFlagsAndWidths(): void {
+		$this->overrideConfigValues( [
+			'CitizenWordmarkVisibleIn' => [ 'footer' ],
+			'CitizenWordmarkWidths' => [
+				'drawer' => 'clamp( 12rem, 30vw, 18rem )',
+				'footer' => '20rem',
+			],
+		] );
+
+		$templateData = $this->getSkinTemplateData();
+
+		$this->assertFalse( $templateData['is-wordmark-visible-in-drawer'] );
+		$this->assertTrue( $templateData['is-wordmark-visible-in-footer'] );
+		$this->assertSame(
+			'clamp( 12rem, 30vw, 18rem )',
+			$templateData['data-wordmark-drawer']['wordmark-width']
+		);
+		$this->assertSame(
+			'20rem',
+			$templateData['data-wordmark-footer']['wordmark-width']
+		);
+	}
+
+	public function testTemplateDataFallsBackToBuiltInWordmarkVisibilityDefaults(): void {
+		$this->overrideConfigValues( [
+			'CitizenWordmarkVisibleIn' => null,
+		] );
+
+		$templateData = $this->getSkinTemplateData();
+
+		$this->assertTrue( $templateData['is-wordmark-visible-in-drawer'] );
+		$this->assertTrue( $templateData['is-wordmark-visible-in-footer'] );
+	}
+
+	public function testInvalidWordmarkWidthsAreIgnored(): void {
+		$this->overrideConfigValues( [
+			'CitizenWordmarkWidths' => [
+				'drawer' => 'javascript:alert(1)',
+				'footer' => '',
+			],
+		] );
+
+		$templateData = $this->getSkinTemplateData();
+
+		$this->assertNull( $templateData['data-wordmark-drawer']['wordmark-width'] );
+		$this->assertNull( $templateData['data-wordmark-footer']['wordmark-width'] );
 	}
 }

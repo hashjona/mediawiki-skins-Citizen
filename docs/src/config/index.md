@@ -36,6 +36,72 @@ $wgCitizenThemeDefault = 'auto';
 - `'light'`: Always starts in light mode
 - `'dark'`: Always starts in dark mode
 
+### `$wgCitizenLogoVisibleIn`
+
+Controls where the icon logo is rendered in the skin chrome.
+By default, Citizen shows it in all supported placements.
+When set, the array is treated as the exact list of placements where the logo should appear.
+
+```php [LocalSettings.php]
+$wgCitizenLogoVisibleIn = [ 'home', 'drawer', 'footer' ];
+```
+
+**Values**:
+
+- `'home'`: Show the logo image in the home button
+- `'drawer'`: Show the logo image in the drawer header
+- `'footer'`: Show the logo image in the footer
+
+When a placement is omitted, only the logo image is hidden there. The wordmark and surrounding content still render normally.
+
+### `$wgCitizenWordmarkVisibleIn`
+
+Controls where the wordmark is rendered in the skin chrome.
+By default, Citizen shows it in all supported placements.
+When set, the array is treated as the exact list of placements where the wordmark should appear.
+
+```php [LocalSettings.php]
+$wgCitizenWordmarkVisibleIn = [ 'drawer', 'footer' ];
+```
+
+**Values**:
+
+- `'drawer'`: Show the wordmark in the drawer header
+- `'footer'`: Show the wordmark in the footer
+
+When a placement is omitted, only the wordmark is hidden there. The icon logo and surrounding content still render normally.
+
+### `$wgCitizenWordmarkWidths`
+
+Controls the rendered width of image wordmarks in the skin chrome.
+Values are CSS widths, and the image height is always `auto` to preserve the aspect ratio.
+Citizen does not use `wgLogos.wordmark.width` or `wgLogos.wordmark.height` for rendering.
+
+```php [LocalSettings.php]
+$wgCitizenWordmarkWidths = [
+    'drawer' => '14rem',
+    'footer' => '20rem'
+];
+```
+
+**Values**:
+
+- `'drawer'`: CSS width for the drawer wordmark image
+- `'footer'`: CSS width for the footer wordmark image
+
+This only affects image wordmarks. Text fallbacks still use the normal typography styles.
+
+Example setup:
+
+```php [LocalSettings.php]
+$wgCitizenLogoVisibleIn = [ 'home' ];
+$wgCitizenWordmarkVisibleIn = [ 'drawer', 'footer' ];
+$wgCitizenWordmarkWidths = [
+    'drawer' => '14rem',
+    'footer' => '20rem'
+];
+```
+
 ### `$wgCitizenEnableCollapsibleSections`
 
 Allows users to collapse and expand sections on pages, making long articles easier to navigate.
@@ -111,12 +177,48 @@ $wgCitizenEnableCJKFonts = false;
 ### `$wgCitizenEnablePreferences`
 
 Enables the user [preferences panel](/customization/preferences), allowing visitors to customize their experience. The panel is extensible — admins can add custom preferences via on-wiki JSON, and gadgets can register their own options at runtime.
+When disabled, Citizen does not render the built-in preferences UI in the header or user menu.
 
 ```php [LocalSettings.php]
 $wgCitizenEnablePreferences = true;
 ```
 
 **Values**: `true`, `false`
+
+### `$wgCitizenPreferencesDefaults`
+
+Sets the default values for Citizen's built-in client preferences.
+This applies even when the preferences panel is disabled.
+Theme is still controlled separately by `$wgCitizenThemeDefault`.
+
+```php [LocalSettings.php]
+$wgCitizenPreferencesDefaults = [
+    'citizen-feature-autohide-navigation' => '1',
+    'citizen-feature-image-dimming' => '0',
+    'citizen-feature-pure-black' => '0',
+    'citizen-feature-custom-font-size' => 'standard',
+    'citizen-feature-custom-width' => 'wide',
+    'citizen-feature-performance-mode' => '1'
+];
+```
+
+Only built-in Citizen preferences are supported here.
+Invalid values are ignored and fall back to the skin defaults.
+When the preferences panel is enabled, any saved browser preferences still override these defaults for that user.
+
+Example setup:
+
+```php [LocalSettings.php]
+$wgCitizenEnablePreferences = false;
+$wgCitizenPreferencesDefaults = [
+    'citizen-feature-autohide-navigation' => '1',
+    'citizen-feature-image-dimming' => '0',
+    'citizen-feature-pure-black' => '0',
+    'citizen-feature-custom-font-size' => 'standard',
+    'citizen-feature-custom-width' => 'wide',
+    'citizen-feature-performance-mode' => '1'
+];
+```
 
 ### `$wgCitizenOverflowInheritedClasses`
 

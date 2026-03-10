@@ -9,11 +9,15 @@
 	<div id="citizen-drawer__card" class="citizen-drawer__card citizen-menu__card">
 		<div class="citizen-menu__card-content">
 			<header class="citizen-drawer__header">
-				{{>Drawer__logo}}
-				<div class="citizen-drawer__siteinfo">
-					{{#data-site-stats}}{{>SiteStats}}{{/data-site-stats}}
-					{{>Wordmark}}
-				</div>
+				{{#is-logo-visible-in-drawer}}{{>Drawer__logo}}{{/is-logo-visible-in-drawer}}
+				{{#has-drawer-siteinfo}}
+					<div class="citizen-drawer__siteinfo">
+						{{#is-wordmark-visible-in-drawer}}
+							{{#data-wordmark-drawer}}{{>Wordmark}}{{/data-wordmark-drawer}}
+						{{/is-wordmark-visible-in-drawer}}
+						{{#data-site-stats}}{{>SiteStats}}{{/data-site-stats}}
+					</div>
+				{{/has-drawer-siteinfo}}
 			</header>
 			{{#data-main-menu}}
 				{{>MainMenu}}

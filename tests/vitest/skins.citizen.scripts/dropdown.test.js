@@ -14,15 +14,28 @@ describe( 'Dropdown', () => {
 			removeEventListener: vi.fn()
 		};
 		summary = {
-			contains: vi.fn().mockReturnValue( false )
+			contains: vi.fn().mockReturnValue( false ),
+			getBoundingClientRect: vi.fn( () => ( {
+				top: 100,
+				bottom: 140
+			} ) )
 		};
 		target = {
 			contains: vi.fn().mockReturnValue( false ),
 			addEventListener: vi.fn(),
 			removeEventListener: vi.fn(),
-			querySelectorAll: vi.fn().mockReturnValue( [] )
+			querySelectorAll: vi.fn().mockReturnValue( [] ),
+			classList: {
+				add: vi.fn(),
+				remove: vi.fn()
+			},
+			getBoundingClientRect: vi.fn( () => ( {
+				top: 140,
+				bottom: 420
+			} ) )
 		};
 		win = {
+			innerHeight: 800,
 			addEventListener: vi.fn(),
 			removeEventListener: vi.fn(),
 			jQuery: {
@@ -245,6 +258,9 @@ describe( 'Dropdown', () => {
 			expect( win.addEventListener ).toHaveBeenCalledWith(
 				'keyup', expect.any( Function )
 			);
+			expect( win.addEventListener ).toHaveBeenCalledWith(
+				'resize', expect.any( Function )
+			);
 		} );
 
 		it( 'should unbind listeners when details closes', () => {
@@ -269,6 +285,58 @@ describe( 'Dropdown', () => {
 			expect( win.removeEventListener ).toHaveBeenCalledWith(
 				'keyup', expect.any( Function )
 			);
+			expect( win.removeEventListener ).toHaveBeenCalledWith(
+				'resize', expect.any( Function )
+			);
+			expect( target.classList.remove ).toHaveBeenCalledWith(
+				'citizen-menu__card--flip-up'
+			);
+		} );
+	} );
+
+	describe( 'updateDirection', () => {
+		it( 'should flip the dropdown up when it overflows below the viewport', () => {
+			const dropdown = create();
+			details.open = true;
+			summary.getBoundingClientRect.mockReturnValue( {
+				top: 500,
+				bottom: 540
+			} );
+			target.getBoundingClientRect.mockReturnValue( {
+				top: 540,
+				bottom: 980
+			} );
+
+			dropdown.updateDirection();
+
+			expect( target.classList.add ).toHaveBeenCalledWith(
+				'citizen-menu__card--flip-up'
+			);
+		} );
+
+		it( 'should keep the dropdown opening down when there is enough space below', () => {
+			const dropdown = create();
+			details.open = true;
+			target.getBoundingClientRect.mockReturnValue( {
+				top: 140,
+				bottom: 420
+			} );
+
+			dropdown.updateDirection();
+
+			expect( target.classList.add ).not.toHaveBeenCalled();
+		} );
+
+		it( 'should remove the flip class when dropdown is closed', () => {
+			const dropdown = create();
+			details.open = false;
+
+			dropdown.updateDirection();
+
+			expect( target.classList.remove ).toHaveBeenCalledWith(
+				'citizen-menu__card--flip-up'
+			);
+			expect( target.classList.add ).not.toHaveBeenCalled();
 		} );
 	} );
 

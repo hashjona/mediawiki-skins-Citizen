@@ -54,6 +54,18 @@ class SkinCitizen extends SkinMustache {
 		'citizen-feature-performance-mode' => '1',
 	];
 
+	private const CLIENT_PREFS_ALLOWED_VALUES = [
+		'citizen-feature-autohide-navigation' => [ '0', '1' ],
+		'citizen-feature-image-dimming' => [ '0', '1' ],
+		'citizen-feature-pure-black' => [ '0', '1' ],
+		'citizen-feature-custom-font-size' => [ 'small', 'standard', 'large', 'xlarge' ],
+		'citizen-feature-custom-width' => [ 'standard', 'wide', 'full' ],
+		'citizen-feature-performance-mode' => [ '0', '1' ],
+	];
+
+	private const LOGO_PLACEMENTS = [ 'home', 'drawer', 'footer' ];
+	private const WORDMARK_PLACEMENTS = [ 'drawer', 'footer' ];
+
 	private const OPTIONAL_FONT_MODULES = [
 		'CitizenEnableCJKFonts' => 'skins.citizen.styles.fonts.cjk',
 		'CitizenEnableARFonts' => 'skins.citizen.styles.fonts.ar',
@@ -117,7 +129,7 @@ class SkinCitizen extends SkinMustache {
 		}
 
 		// Default client preferences
-		foreach ( self::DEFAULT_CLIENT_PREFS as $feature => $value ) {
+		foreach ( $this->getClientPreferenceDefaults( $config ) as $feature => $value ) {
 			$classes[] = $feature . '-clientpref-' . $value;
 		}
 
@@ -253,8 +265,8 @@ class SkinCitizen extends SkinMustache {
 		$parentData['data-sticky-header']['html-sticky-header-tagline'] =
 			$this->prepareStickyHeaderTagline( $parentData['data-page-heading']['html-tagline'] );
 
-		// TODO: Pass the home icon through the component instead of injecting into logos data
-		$parentData['data-logos']['icon-home'] = 'home';
+		$this->applyBrandingTemplateData( $parentData, $config );
+		$parentData['is-preferences-enabled'] = $config->get( 'CitizenEnablePreferences' );
 
 		$parentData['html-before-page-header'] = $this->getBeforePageHeaderHtml();
 
@@ -292,6 +304,152 @@ class SkinCitizen extends SkinMustache {
 		}
 
 		return [ $sidebar, $pageToolsMenu ];
+	}
+
+	/**
+	 * @return array<string, string>
+	 */
+	private function getClientPreferenceDefaults( Config $config ): array {
+		$defaults = self::DEFAULT_CLIENT_PREFS;
+		$configuredDefaults = $config->get( 'CitizenPreferencesDefaults' );
+
+		if ( !is_array( $configuredDefaults ) ) {
+			return $defaults;
+		}
+
+		foreach ( self::CLIENT_PREFS_ALLOWED_VALUES as $feature => $allowedValues ) {
+			$configuredValue = $configuredDefaults[$feature] ?? null;
+			if ( is_string( $configuredValue ) && in_array( $configuredValue, $allowedValues, true ) ) {
+				$defaults[$feature] = $configuredValue;
+			}
+		}
+
+		return $defaults;
+	}
+
+	/**
+	 * @param array<string, mixed> &$templateData
+	 */
+	private function applyBrandingTemplateData( array &$templateData, Config $config ): void {
+		// TODO: Pass the home icon through the component instead of injecting into logos data
+		$templateData['data-logos']['icon-home'] = 'home';
+
+		$logoVisibility = $this->getLogoVisibilityMap( $config );
+		$wordmarkVisibility = $this->getWordmarkVisibilityMap( $config );
+		$wordmarkWidths = $this->getWordmarkWidthMap( $config );
+
+		foreach ( $logoVisibility as $placement => $isVisible ) {
+			$templateData["is-logo-visible-in-$placement"] = $isVisible;
+		}
+
+		foreach ( self::WORDMARK_PLACEMENTS as $placement ) {
+			$templateData["is-wordmark-visible-in-$placement"] = $wordmarkVisibility[$placement];
+			$templateData["data-wordmark-$placement"] = $this->getWordmarkTemplateData(
+				$templateData['data-logos'],
+				$wordmarkWidths[$placement]
+			);
+		}
+
+		$templateData['has-drawer-siteinfo'] =
+			$wordmarkVisibility['drawer'] || !empty( $templateData['data-site-stats'] );
+		$templateData['has-footer-sitetitle'] =
+			$logoVisibility['footer'] || $wordmarkVisibility['footer'];
+	}
+
+	/**
+	 * @return array{home: bool, drawer: bool, footer: bool}
+	 */
+	private function getLogoVisibilityMap( Config $config ): array {
+		return $this->getPlacementVisibilityMap( $config, 'CitizenLogoVisibleIn', self::LOGO_PLACEMENTS );
+	}
+
+	/**
+	 * @return array{drawer: bool, footer: bool}
+	 */
+	private function getWordmarkVisibilityMap( Config $config ): array {
+		return $this->getPlacementVisibilityMap( $config, 'CitizenWordmarkVisibleIn', self::WORDMARK_PLACEMENTS );
+	}
+
+	/**
+	 * @return array{drawer: ?string, footer: ?string}
+	 */
+	private function getWordmarkWidthMap( Config $config ): array {
+		return $this->getConfiguredCssSizeMap(
+			$config->get( 'CitizenWordmarkWidths' ),
+			self::WORDMARK_PLACEMENTS
+		);
+	}
+
+	/**
+	 * @param array<string, mixed> $dataLogos
+	 * @return array{wordmark: mixed, wordmark-width: ?string}
+	 */
+	private function getWordmarkTemplateData( array $dataLogos, ?string $width ): array {
+		return [
+			'wordmark' => $dataLogos['wordmark'] ?? false,
+			'wordmark-width' => $width,
+		];
+	}
+
+	/**
+	 * @param string[] $placements
+	 * @return array<string, bool>
+	 */
+	private function getPlacementVisibilityMap(
+		Config $config,
+		string $configKey,
+		array $placements
+	): array {
+		$visibility = array_fill_keys( $placements, false );
+		$visibleIn = $config->get( $configKey );
+
+		if ( !is_array( $visibleIn ) ) {
+			$visibleIn = $placements;
+		}
+
+		foreach ( $visibleIn as $placement ) {
+			if ( is_string( $placement ) && array_key_exists( $placement, $visibility ) ) {
+				$visibility[$placement] = true;
+			}
+		}
+
+		return $visibility;
+	}
+
+	/**
+	 * @param string[] $placements
+	 * @return array<string, ?string>
+	 */
+	private function getConfiguredCssSizeMap( mixed $configuredValues, array $placements ): array {
+		$values = array_fill_keys( $placements, null );
+
+		if ( !is_array( $configuredValues ) ) {
+			return $values;
+		}
+
+		foreach ( $placements as $placement ) {
+			$values[$placement] = $this->sanitizeCssSize( $configuredValues[$placement] ?? null );
+		}
+
+		return $values;
+	}
+
+	private function sanitizeCssSize( mixed $value ): ?string {
+		if ( !is_string( $value ) ) {
+			return null;
+		}
+
+		$value = trim( $value );
+
+		if ( $value === '' ) {
+			return null;
+		}
+
+		if ( !preg_match( '/^[a-zA-Z0-9.%(),+\\-\\/\\s]+$/', $value ) ) {
+			return null;
+		}
+
+		return $value;
 	}
 
 	/**

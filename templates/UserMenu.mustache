@@ -14,7 +14,9 @@
 	<div id="citizen-userMenu__card" class="citizen-menu__card">
 		<div class="citizen-menu__card-content">
 			{{#data-user-info}}{{>UserInfo}}{{/data-user-info}}
-			{{#data-portlets.data-user-interface-preferences}}{{>Menu}}{{/data-portlets.data-user-interface-preferences}}
+			{{#is-preferences-enabled}}
+				{{#data-portlets.data-user-interface-preferences}}{{>Menu}}{{/data-portlets.data-user-interface-preferences}}
+			{{/is-preferences-enabled}}
 			{{#data-portlets.data-user-menu}}{{>Menu}}{{/data-portlets.data-user-menu}}
 		</div>
 	</div>

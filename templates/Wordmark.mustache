@@ -1,12 +1,10 @@
 {{!
 	
 }}
-{{#data-logos}}
 {{#wordmark}}
 <img class="mw-logo-wordmark" alt="{{msg-sitetitle}}"
-	src="{{src}}" width="{{width}}" height="{{height}}">
+	src="{{src}}"{{#wordmark-width}} style="width: {{.}};"{{/wordmark-width}}>
 {{/wordmark}}
 {{^wordmark}}
 <div class="mw-logo-wordmark">{{msg-sitetitle}}</div>
 {{/wordmark}}
-{{/data-logos}}

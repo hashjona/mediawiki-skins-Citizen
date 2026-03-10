@@ -6,7 +6,8 @@ const
 	DROPDOWN_CONTAINER_SELECTOR = '.citizen-dropdown',
 	DROPDOWN_DETAILS_SELECTOR = '.citizen-dropdown-details',
 	DROPDOWN_SUMMARY_SELECTOR = '.citizen-dropdown-summary',
-	DROPDOWN_TARGET_SELECTOR = '.citizen-menu__card';
+	DROPDOWN_TARGET_SELECTOR = '.citizen-menu__card',
+	DROPDOWN_TARGET_FLIP_CLASS = 'citizen-menu__card--flip-up';
 
 /**
  * Represents a Dropdown menu with enhanced functionality.
@@ -26,6 +27,7 @@ class Dropdown {
 		this.dismissOnLinkClick = this.dismissOnLinkClick.bind( this );
 		this.dismissOnBeforeUnload = this.dismiss.bind( this );
 		this.onDetailsToggle = this.onDetailsToggle.bind( this );
+		this.updateDirection = this.updateDirection.bind( this );
 	}
 
 	dismiss() {
@@ -77,6 +79,8 @@ class Dropdown {
 		this.window.removeEventListener( 'touchstart', this.dismissIfExternalEventTarget );
 		this.window.removeEventListener( 'focusin', this.dismissIfExternalEventTarget );
 		this.window.removeEventListener( 'keyup', this.dismissOnEscape );
+		this.window.removeEventListener( 'resize', this.updateDirection );
+		this.target.classList.remove( DROPDOWN_TARGET_FLIP_CLASS );
 	}
 
 	/**
@@ -88,11 +92,33 @@ class Dropdown {
 		this.window.addEventListener( 'touchstart', this.dismissIfExternalEventTarget, { passive: true } );
 		this.window.addEventListener( 'focusin', this.dismissIfExternalEventTarget );
 		this.window.addEventListener( 'keyup', this.dismissOnEscape );
+		this.window.addEventListener( 'resize', this.updateDirection );
+	}
+
+	updateDirection() {
+		this.target.classList.remove( DROPDOWN_TARGET_FLIP_CLASS );
+
+		if ( !this.details.open ) {
+			return;
+		}
+
+		const summaryRect = this.summary.getBoundingClientRect();
+		const targetRect = this.target.getBoundingClientRect();
+		const availableAbove = summaryRect.top;
+		const availableBelow = this.window.innerHeight - summaryRect.bottom;
+		const shouldFlipUp =
+			targetRect.bottom > this.window.innerHeight &&
+			availableAbove > availableBelow;
+
+		if ( shouldFlipUp ) {
+			this.target.classList.add( DROPDOWN_TARGET_FLIP_CLASS );
+		}
 	}
 
 	onDetailsToggle() {
 		if ( this.details.open ) {
 			this.bind();
+			this.updateDirection();
 		} else {
 			this.unbind();
 		}

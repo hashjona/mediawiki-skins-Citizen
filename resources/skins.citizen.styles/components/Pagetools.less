@@ -167,6 +167,12 @@
 
 		.citizen-menu__card {
 			white-space: nowrap; // Expand the width on narrow screens might overflow the page
+
+			&--flip-up {
+				top: unset;
+				bottom: 100%;
+				transform-origin: var( --transform-origin-offset-end ) var( --transform-origin-offset-end );
+			}
 		}
 	}
 }
