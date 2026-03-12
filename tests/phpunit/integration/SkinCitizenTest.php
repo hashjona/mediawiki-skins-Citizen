@@ -15,7 +15,7 @@ use RequestContext;
  */
 class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 
-	private function createSkinInstance(): SkinCitizen {
+	private function createSkinInstance( ?Title $title = null ): SkinCitizen {
 		$skin = new SkinCitizen(
 			$this->getServiceContainer()->getUserFactory(),
 			$this->getServiceContainer()->getGenderCache(),
@@ -32,7 +32,7 @@ class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 		);
 
 		$skin->setContext(
-			RequestContext::newExtraneousContext( Title::makeTitle( NS_MAIN, 'SkinCitizenTest' ) )
+			RequestContext::newExtraneousContext( $title ?? Title::makeTitle( NS_MAIN, 'SkinCitizenTest' ) )
 		);
 
 		return $skin;
@@ -199,6 +199,15 @@ class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 
 		$this->assertContains(
 			'citizen-sections-enabled',
+			$skin->getOptions()['bodyClasses']
+		);
+	}
+
+	public function testMainPageBodyClass(): void {
+		$skin = $this->createSkinInstance( Title::newMainPage() );
+
+		$this->assertContains(
+			'citizen-mainpage',
 			$skin->getOptions()['bodyClasses']
 		);
 	}

@@ -506,6 +506,10 @@ class SkinCitizen extends SkinMustache {
 		$title = $this->getOutput()->getTitle();
 
 		if ( $title !== null ) {
+			if ( $title->isMainPage() ) {
+				$options['bodyClasses'][] = 'citizen-mainpage';
+			}
+
 			// Collapsible sections
 			if (
 				$config->get( 'CitizenEnableCollapsibleSections' ) === true &&
