@@ -1,3 +1,18 @@
+.citizen-before-page-header {
+	padding-inline: var( --padding-page );
+
+	&__inner {
+		max-width: var( --width-layout );
+		margin-inline: auto;
+
+		@media ( min-width: @min-width-breakpoint-desktop ) {
+			.citizen-toc-enabled & {
+				max-width: var( --width-page );
+			}
+		}
+	}
+}
+
 .citizen-page-header {
 	position: relative;
 	z-index: @z-index-above-content;

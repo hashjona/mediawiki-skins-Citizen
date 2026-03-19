@@ -59,7 +59,7 @@ The old hook still works but logs a deprecation warning. See the [migration guid
 
 | Hook | Parameters | Description |
 | :--- | :--- | :--- |
-| `CitizenBeforePageHeader` | `SkinCitizen $skin, string &$html` | Append raw HTML immediately before the standard Citizen page header rendered by `templates/PageHeader.mustache`. |
+| `CitizenBeforePageHeader` | `SkinCitizen $skin, string &$html` | Append raw HTML immediately before the standard Citizen page header rendered by `templates/PageHeader.mustache`. Citizen wraps the injected markup in `.citizen-before-page-header > .citizen-before-page-header__inner` so it follows the active page width and gutters. |
 
 Register the hook in your extension:
 
