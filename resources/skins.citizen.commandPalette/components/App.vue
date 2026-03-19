@@ -1,62 +1,78 @@
 <template>
-	<div
-		v-if="isOpen"
-		class="citizen-command-palette-backdrop"
-		@click="close"></div>
-	<div
-		v-if="isOpen"
-		class="citizen-command-palette"
-		@keydown="keyboard.handleKeydown"
-	>
-		<command-palette-header
-			ref="searchHeader"
-			:tokens="tokenInput.tokens.value"
-			:free-text="tokenInput.freeText.value"
-			:selected-token-index="tokenInput.selectedIndex.value"
-			:is-pending="isPending"
-			:show-pending="showPending"
-			:active-mode="activeMode"
-			@exit-mode="exitMode"
-			@update:free-text="handleFreeTextUpdate( $event )"
-			@select-token="tokenInput.selectToken( $event )"
-			@remove-token="handleRemoveToken( $event )"
-		></command-palette-header>
+	<Transition name="citizen-command-palette-backdrop">
 		<div
-			class="citizen-command-palette__body"
-			:class="{ 'citizen-command-palette__body--has-detail': highlightedItemDetail }"
+			v-if="isOpen"
+			class="citizen-command-palette-backdrop"
+			@click="close"></div>
+	</Transition>
+	<Transition
+		name="citizen-command-palette"
+		@after-enter="setupResizeObserver"
+		@after-leave="teardownResizeObserver"
+	>
+		<div
+			v-if="isOpen"
+			class="citizen-command-palette"
+			@keydown="keyboard.handleKeydown"
 		>
-			<div class="citizen-command-palette__results">
-				<command-palette-empty-state
-					v-if="!showPending && flatItems.length === 0"
-					:title="emptyStateContent.title"
-					:description="emptyStateContent.description"
-					:icon="emptyStateContent.icon"
-				></command-palette-empty-state>
-				<command-palette-list
-					v-else-if="displayedItems.length > 0"
-					:sections="displayedItems"
-					:highlighted-item-index="highlightedItemIndex"
-					:search-query="query"
-					:set-item-ref="setItemRef"
-					@select="selectResult"
-					@action="handleAction"
-					@hover="handleHover"
-				></command-palette-list>
+			<command-palette-header
+				ref="searchHeader"
+				:tokens="tokenInput.tokens.value"
+				:free-text="tokenInput.freeText.value"
+				:selected-token-index="tokenInput.selectedIndex.value"
+				:is-pending="isPending"
+				:show-pending="showPending"
+				:active-mode="activeMode"
+				@exit-mode="exitMode"
+				@update:free-text="handleFreeTextUpdate( $event )"
+				@select-token="tokenInput.selectToken( $event )"
+				@remove-token="handleRemoveToken( $event )"
+			></command-palette-header>
+			<div
+				ref="bodyContainer"
+				class="citizen-command-palette__body"
+			>
+				<div
+					ref="bodyViewport"
+					class="citizen-command-palette__body-viewport"
+					:class="{ 'citizen-command-palette__body-viewport--has-detail': highlightedItemDetail }"
+				>
+					<div class="citizen-command-palette__results">
+						<command-palette-empty-state
+							v-if="!showPending && flatItems.length === 0"
+							:title="emptyStateContent.title"
+							:description="emptyStateContent.description"
+							:icon="emptyStateContent.icon"
+						></command-palette-empty-state>
+						<command-palette-list
+							v-else-if="displayedItems.length > 0"
+							:sections="displayedItems"
+							:highlighted-item-index="highlightedItemIndex"
+							:search-query="query"
+							:set-item-ref="setItemRef"
+							@select="selectResult"
+							@action="handleAction"
+							@hover="handleHover"
+						></command-palette-list>
+					</div>
+					<Transition name="citizen-command-palette-detail">
+						<command-palette-detail-panel
+							v-if="highlightedItemDetail"
+							class="citizen-command-palette__detail"
+							:detail="highlightedItemDetail"
+						></command-palette-detail-panel>
+					</Transition>
+				</div>
 			</div>
-			<command-palette-detail-panel
-				v-if="highlightedItemDetail"
-				class="citizen-command-palette__detail"
-				:detail="highlightedItemDetail"
-			></command-palette-detail-panel>
+			<command-palette-footer
+				:hints="keyboard.keyboardHints.value"
+			></command-palette-footer>
 		</div>
-		<command-palette-footer
-			:hints="keyboard.keyboardHints.value"
-		></command-palette-footer>
-	</div>
+	</Transition>
 </template>
 
 <script>
-const { defineComponent, ref, nextTick, computed, watch, inject } = require( 'vue' );
+const { defineComponent, ref, nextTick, computed, watch, inject, onBeforeUnmount } = require( 'vue' );
 const useListNavigation = require( '../composables/useListNavigation.js' );
 const useKeyboard = require( '../composables/useKeyboard.js' );
 const useProviderOrchestration = require( '../composables/useProviderOrchestration.js' );
@@ -97,6 +113,39 @@ module.exports = exports = defineComponent( {
 		const isOpen = ref( false );
 		const searchHeader = ref( null );
 		const itemRefs = ref( new Map() );
+		const bodyContainer = ref( null );
+		const bodyViewport = ref( null );
+		let resizeObserver = null;
+
+		/**
+		 * Sync the body container's height CSS variable to the viewport's
+		 * rendered height. The CSS transition on the body handles animation.
+		 */
+		const updateBodyHeight = () => {
+			const container = bodyContainer.value;
+			const viewport = bodyViewport.value;
+			if ( container && viewport ) {
+				container.style.height = viewport.clientHeight + 'px';
+			}
+		};
+
+		const setupResizeObserver = () => {
+			if ( !bodyViewport.value ) {
+				return;
+			}
+			updateBodyHeight();
+			resizeObserver = new ResizeObserver( updateBodyHeight );
+			resizeObserver.observe( bodyViewport.value );
+		};
+
+		const teardownResizeObserver = () => {
+			if ( resizeObserver ) {
+				resizeObserver.disconnect();
+				resizeObserver = null;
+			}
+		};
+
+		onBeforeUnmount( teardownResizeObserver );
 
 		// Provider orchestration (replaces Pinia searchStore)
 		const orchDeps = {
@@ -400,6 +449,11 @@ module.exports = exports = defineComponent( {
 			// State
 			isOpen,
 			searchHeader,
+			bodyContainer,
+			bodyViewport,
+			// Body height animation
+			setupResizeObserver,
+			teardownResizeObserver,
 			// Orchestration
 			activeMode: orch.activeMode,
 			exitMode: orch.exitMode,
@@ -443,25 +497,21 @@ module.exports = exports = defineComponent( {
 	top: var( --space-xs );
 	right: var( --space-xs );
 	left: var( --space-xs );
+	display: flex;
+	flex-direction: column;
 	max-width: @size-5600;
+	max-height: calc( 100vh - var( --space-xs ) * 2 );
 	margin-inline: auto;
 	overflow: hidden;
 	border: var( --border-base );
 	border-radius: var( --border-radius-medium );
 	box-shadow: var( --box-shadow-drop-xx-large );
-	transform: unset;
-	transition-timing-function: var( --transition-timing-function-ease-out );
-	transition-duration: var( --transition-duration-medium );
-	transition-property: transform;
 	.mixin-citizen-frosted-glass;
 	.mixin-citizen-font-styles( 'small' );
 
-	@starting-style {
-		transform: scale( 0 ) translateY( -200% );
-	}
-
 	@media ( min-width: @max-width-breakpoint-tablet ) {
 		top: 3rem;
+		max-height: calc( 100vh - 3rem * 2 );
 	}
 
 	&-overlay {
@@ -474,11 +524,25 @@ module.exports = exports = defineComponent( {
 		position: fixed;
 		inset: 0;
 		background-color: var( --background-color-backdrop-light );
+		-webkit-backdrop-filter: var( --backdrop-filter-blur );
+		backdrop-filter: var( --backdrop-filter-blur );
 	}
 
 	&__body {
+		flex: 1;
+		min-height: 0;
+		overflow: hidden;
 		border-top: var( --border-subtle );
+		transition-timing-function: var( --transition-timing-function-ease-out );
+		transition-duration: var( --transition-duration-medium );
+		transition-property: height;
+	}
 
+	// Viewport: normal block-flow child of the animated body.
+	// Must NOT have explicit height — its clientHeight must be
+	// determined solely by its children so the ResizeObserver
+	// reads a stable value independent of the body's animated height.
+	&__body-viewport {
 		@media ( min-width: @min-width-breakpoint-tablet ) {
 			&--has-detail {
 				display: flex;
@@ -487,10 +551,13 @@ module.exports = exports = defineComponent( {
 	}
 
 	&__results {
-		max-height: calc( 100vh - 16rem );
+		// Self-constraining max-height so the viewport wrapper has a
+		// stable clientHeight for the ResizeObserver to read
+		max-height: calc( 100vh - 12rem );
 		overflow-y: auto;
+		overscroll-behavior: contain;
 
-		.citizen-command-palette__body--has-detail & {
+		.citizen-command-palette__body-viewport--has-detail & {
 			@media ( min-width: @min-width-breakpoint-tablet ) {
 				flex: 3;
 				border-inline-end: var( --border-subtle );
@@ -504,7 +571,9 @@ module.exports = exports = defineComponent( {
 		@media ( min-width: @min-width-breakpoint-tablet ) {
 			display: block;
 			flex: 2;
-			max-height: calc( 100vh - 16rem );
+			max-height: calc( 100vh - 12rem );
+			overflow-y: auto;
+			overscroll-behavior: contain;
 		}
 	}
 
@@ -523,5 +592,52 @@ module.exports = exports = defineComponent( {
 			opacity: 0;
 		}
 	}
+}
+
+// Palette entrance/exit
+.citizen-command-palette-enter-active,
+.citizen-command-palette-leave-active {
+	transition-timing-function: var( --transition-timing-function-ease-out );
+	transition-duration: var( --transition-duration-medium );
+	transition-property: transform, opacity;
+}
+
+.citizen-command-palette-enter-from {
+	opacity: 0;
+	transform: scale( 1.06 );
+	transform-origin: 50% 0;
+}
+
+.citizen-command-palette-leave-to {
+	opacity: 0;
+	transform: scale( 1.04 );
+	transform-origin: 50% 0;
+}
+
+// Backdrop entrance/exit
+.citizen-command-palette-backdrop-enter-active,
+.citizen-command-palette-backdrop-leave-active {
+	transition-timing-function: var( --transition-timing-function-ease-out );
+	transition-duration: var( --transition-duration-medium );
+	transition-property: opacity;
+}
+
+.citizen-command-palette-backdrop-enter-from,
+.citizen-command-palette-backdrop-leave-to {
+	opacity: 0;
+}
+
+// Detail panel slide-in
+.citizen-command-palette-detail-enter-active,
+.citizen-command-palette-detail-leave-active {
+	transition-timing-function: var( --transition-timing-function-ease-out );
+	transition-duration: var( --transition-duration-medium );
+	transition-property: flex, opacity;
+}
+
+.citizen-command-palette-detail-enter-from,
+.citizen-command-palette-detail-leave-to {
+	flex: 0;
+	opacity: 0;
 }
 </style>
