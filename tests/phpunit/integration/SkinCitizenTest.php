@@ -146,7 +146,7 @@ class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 	public function testConfiguredClientPreferenceDefaultsAffectHtmlClasses(): void {
 		$this->overrideConfigValues( [
 			'CitizenPreferencesDefaults' => [
-				'citizen-feature-custom-width' => 'wide',
+				'citizen-feature-custom-width' => 'expanded',
 				'citizen-feature-performance-mode' => '0',
 			],
 		] );
@@ -154,7 +154,7 @@ class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 		$attrs = $this->getSkinHtmlClasses();
 
 		$this->assertStringContainsString(
-			'citizen-feature-custom-width-clientpref-wide',
+			'citizen-feature-custom-width-clientpref-expanded',
 			$attrs
 		);
 		$this->assertStringContainsString(

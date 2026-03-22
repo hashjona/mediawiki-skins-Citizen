@@ -83,6 +83,7 @@
 	"citizen-feature-custom-width-name": "Width",
 	"citizen-feature-custom-width-description": "Change the width of the content area",
 	"citizen-feature-custom-width-standard-label": "Standard",
+	"citizen-feature-custom-width-expanded-label": "Expanded",
 	"citizen-feature-custom-width-wide-label": "Wide",
 	"citizen-feature-custom-width-full-label": "Full",
 	"citizen-config-logovisiblein": "Places where the icon logo is shown",

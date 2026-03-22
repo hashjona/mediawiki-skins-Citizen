@@ -78,6 +78,7 @@
 	"citizen-feature-custom-width-name": "Heading label for page width",
 	"citizen-feature-custom-width-description": "Description for page width preference.",
 	"citizen-feature-custom-width-standard-label": "Label for standard page width. An adjective that describes \"text\" ({{msg-mw|Citizen-feature-custom-width-name}}).",
+	"citizen-feature-custom-width-expanded-label": "Label for expanded page width. An adjective that describes \"text\" ({{msg-mw|Citizen-feature-custom-width-name}}).",
 	"citizen-feature-custom-width-wide-label": "Label for wide page width. An adjective that describes \"text\" ({{msg-mw|Citizen-feature-custom-width-name}}).",
 	"citizen-feature-custom-width-full-label": "Label for full page width. An adjective that describes \"text\" ({{msg-mw|Citizen-feature-custom-width-name}}).",
 	"citizen-config-logovisiblein": "Description for the `$wgCitizenLogoVisibleIn` skin configuration setting, which controls where the skin renders the configured icon logo image.",

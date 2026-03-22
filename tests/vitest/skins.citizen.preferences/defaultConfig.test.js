@@ -74,6 +74,18 @@ describe( 'defaultConfig', () => {
 		expect( opts ).toEqual( [ '0', '1' ] );
 	} );
 
+	it( 'should include the expanded width option between standard and wide', () => {
+		const config = getDefaultConfig();
+		const opts = config.preferences[ 'citizen-feature-custom-width' ].options;
+
+		expect( opts ).toEqual( [
+			{ value: 'standard', labelMsg: 'citizen-feature-custom-width-standard-label' },
+			{ value: 'expanded', labelMsg: 'citizen-feature-custom-width-expanded-label' },
+			{ value: 'wide', labelMsg: 'citizen-feature-custom-width-wide-label' },
+			{ value: 'full', labelMsg: 'citizen-feature-custom-width-full-label' }
+		] );
+	} );
+
 	it( 'should include type and visibilityCondition', () => {
 		const config = getDefaultConfig();
 

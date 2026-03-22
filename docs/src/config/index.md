@@ -190,6 +190,7 @@ $wgCitizenEnablePreferences = true;
 Sets the default values for Citizen's built-in client preferences.
 This applies even when the preferences panel is disabled.
 Theme is still controlled separately by `$wgCitizenThemeDefault`.
+Supported width values are `standard`, `expanded`, `wide`, and `full`.
 
 ```php [LocalSettings.php]
 $wgCitizenPreferencesDefaults = [
@@ -197,7 +198,7 @@ $wgCitizenPreferencesDefaults = [
     'citizen-feature-image-dimming' => '0',
     'citizen-feature-pure-black' => '0',
     'citizen-feature-custom-font-size' => 'standard',
-    'citizen-feature-custom-width' => 'wide',
+    'citizen-feature-custom-width' => 'expanded',
     'citizen-feature-performance-mode' => '1'
 ];
 ```
@@ -215,7 +216,7 @@ $wgCitizenPreferencesDefaults = [
     'citizen-feature-image-dimming' => '0',
     'citizen-feature-pure-black' => '0',
     'citizen-feature-custom-font-size' => 'standard',
-    'citizen-feature-custom-width' => 'wide',
+    'citizen-feature-custom-width' => 'expanded',
     'citizen-feature-performance-mode' => '1'
 ];
 ```

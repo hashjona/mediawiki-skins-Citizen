@@ -43,6 +43,7 @@ function getDefaultConfig() {
 				section: 'appearance',
 				options: [
 					{ value: 'standard', labelMsg: 'citizen-feature-custom-width-standard-label' },
+					{ value: 'expanded', labelMsg: 'citizen-feature-custom-width-expanded-label' },
 					{ value: 'wide', labelMsg: 'citizen-feature-custom-width-wide-label' },
 					{ value: 'full', labelMsg: 'citizen-feature-custom-width-full-label' }
 				],

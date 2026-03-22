@@ -77,11 +77,12 @@ Any font works, but [variable fonts](https://fonts.google.com/variablefonts) are
 
 ## Layout
 
-The page width options are user preferences — users pick from Standard, Wide, or Full in the preferences panel. You can override the widths for each option:
+The page width options are user preferences — users pick from Standard, Expanded, Wide, or Full in the preferences panel. You can override the widths for each option:
 
 | Option | Selector | Default value |
 | :--- | :--- | :--- |
 | Standard | `:root.citizen-feature-custom-width-clientpref-standard` | `1080px` |
+| Expanded | `:root.citizen-feature-custom-width-clientpref-expanded` | `1320px` |
 | Wide | `:root.citizen-feature-custom-width-clientpref-wide` | `1600px` |
 | Full | `:root.citizen-feature-custom-width-clientpref-full` | `100vw` |
 
