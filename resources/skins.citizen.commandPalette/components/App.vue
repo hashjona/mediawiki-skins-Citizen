@@ -28,6 +28,11 @@
 				@select-token="tokenInput.selectToken( $event )"
 				@remove-token="handleRemoveToken( $event )"
 			></command-palette-header>
+			<command-palette-namespaces
+				:tokens="tokenInput.tokens.value"
+				:active-mode="activeMode"
+				@select-namespace="handleNamespaceSelect"
+			></command-palette-namespaces>
 			<div
 				ref="bodyContainer"
 				class="citizen-command-palette__body"
@@ -82,6 +87,7 @@ const CommandPaletteEmptyState = require( './CommandPaletteEmptyState.vue' );
 const CommandPaletteFooter = require( './CommandPaletteFooter.vue' );
 const CommandPaletteHeader = require( './CommandPaletteHeader.vue' );
 const CommandPaletteDetailPanel = require( './CommandPaletteDetailPanel.vue' );
+const CommandPaletteNamespaces = require( './CommandPaletteNamespaces.vue' );
 const { cdxIconArticleNotFound, cdxIconArticlesSearch } = require( '../icons.json' );
 
 // @vue/component
@@ -95,7 +101,8 @@ module.exports = exports = defineComponent( {
 		CommandPaletteEmptyState,
 		CommandPaletteDetailPanel,
 		CommandPaletteFooter,
-		CommandPaletteHeader
+		CommandPaletteHeader,
+		CommandPaletteNamespaces
 	},
 	props: {},
 	setup() {
@@ -391,6 +398,31 @@ module.exports = exports = defineComponent( {
 			}
 		};
 
+		const handleNamespaceSelect = ( ns ) => {
+			const currentText = tokenInput.freeText.value;
+
+			// Remove any existing namespace token
+			const nsTokenIndex = tokenInput.tokens.value.findIndex( ( t ) => t.modeId === 'namespace' );
+			if ( nsTokenIndex !== -1 ) {
+				tokenInput.removeToken( nsTokenIndex );
+			}
+
+			if ( ns.id !== '0' ) {
+				// Non-main: add as a token directly
+				tokenInput.addToken( {
+					label: ns.name + ':',
+					raw: ns.name + ':',
+					modeId: 'namespace',
+					position: 'prefix'
+				} );
+			}
+
+			// Restore free text and force re-query
+			tokenInput.setFreeText( currentText );
+			orch.updateQuery( tokenInput.fullQuery.value );
+			nextTick( focusInput );
+		};
+
 		const handleFreeTextUpdate = ( text ) => {
 			tokenInput.setFreeText( text );
 			// When detection consumed part of the text (creating tokens),
@@ -466,6 +498,7 @@ module.exports = exports = defineComponent( {
 			tokenInput,
 			handleFreeTextUpdate,
 			handleRemoveToken,
+			handleNamespaceSelect,
 			// Keyboard
 			keyboard,
 			// List nav

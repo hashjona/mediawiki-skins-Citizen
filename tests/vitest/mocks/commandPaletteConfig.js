@@ -3,5 +3,6 @@
 module.exports = {
 	isMediaSearchExtensionEnabled: false,
 	isSemanticMediaWikiEnabled: false,
-	wgSearchSuggestCacheExpiry: 1200
+	wgSearchSuggestCacheExpiry: 1200,
+	wgCitizenSearchNamespaceButtons: [ 0 ]
 };
