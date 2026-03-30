@@ -46,6 +46,46 @@ class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 		return $this->createSkinInstance()->getTemplateData();
 	}
 
+	private function getDefaultPreferencesConfig(): array {
+		return [
+			'skin-theme' => [
+				'enabled' => true,
+				'default' => 'os',
+				'options' => [ 'os', 'day', 'night' ],
+			],
+			'citizen-feature-custom-font-size' => [
+				'enabled' => true,
+				'default' => 'standard',
+				'options' => [ 'small', 'standard', 'large', 'xlarge' ],
+			],
+			'citizen-feature-custom-width' => [
+				'enabled' => true,
+				'default' => 'standard',
+				'options' => [ 'standard', 'expanded', 'wide', 'full' ],
+			],
+			'citizen-feature-pure-black' => [
+				'enabled' => true,
+				'default' => '0',
+				'options' => [ '0', '1' ],
+			],
+			'citizen-feature-image-dimming' => [
+				'enabled' => true,
+				'default' => '0',
+				'options' => [ '0', '1' ],
+			],
+			'citizen-feature-autohide-navigation' => [
+				'enabled' => true,
+				'default' => '1',
+				'options' => [ '0', '1' ],
+			],
+			'citizen-feature-performance-mode' => [
+				'enabled' => true,
+				'default' => '1',
+				'options' => [ '0', '1' ],
+			],
+		];
+	}
+
 	public function testThemeColorMetaTag(): void {
 		$this->overrideConfigValues( [
 			'CitizenThemeColor' => '#ffaabb',
@@ -132,23 +172,25 @@ class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 		);
 	}
 
-	public function testSetSkinThemeWithInvalidValue(): void {
+	public function testSetSkinThemeWithInvalidDefault(): void {
+		$config = $this->getDefaultPreferencesConfig();
+		$config['skin-theme']['default'] = 'invalid-value';
 		$this->overrideConfigValues( [
-			'CitizenThemeDefault' => 'invalid-value',
+			'CitizenPreferencesConfig' => $config,
 		] );
 
-		// Should not throw an undefined array key error
-		$skin = $this->createSkinInstance();
-		$attrs = $skin->getHtmlElementAttributes();
-		$this->assertStringNotContainsString( 'skin-theme-clientpref-', $attrs['class'] );
+		$attrs = $this->getSkinHtmlClasses();
+		// Invalid default falls back to first option ('os')
+		$this->assertStringContainsString( 'skin-theme-clientpref-os', $attrs );
+		$this->assertStringNotContainsString( 'skin-theme-clientpref-invalid-value', $attrs );
 	}
 
 	public function testConfiguredClientPreferenceDefaultsAffectHtmlClasses(): void {
+		$config = $this->getDefaultPreferencesConfig();
+		$config['citizen-feature-custom-width']['default'] = 'expanded';
+		$config['citizen-feature-performance-mode']['default'] = '0';
 		$this->overrideConfigValues( [
-			'CitizenPreferencesDefaults' => [
-				'citizen-feature-custom-width' => 'expanded',
-				'citizen-feature-performance-mode' => '0',
-			],
+			'CitizenPreferencesConfig' => $config,
 		] );
 
 		$attrs = $this->getSkinHtmlClasses();
@@ -167,11 +209,11 @@ class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 		);
 	}
 
-	public function testInvalidClientPreferenceDefaultsFallBackToBuiltInValues(): void {
+	public function testInvalidClientPreferenceDefaultsFallBackToFirstOption(): void {
+		$config = $this->getDefaultPreferencesConfig();
+		$config['citizen-feature-custom-width']['default'] = 'invalid';
 		$this->overrideConfigValues( [
-			'CitizenPreferencesDefaults' => [
-				'citizen-feature-custom-width' => 'invalid',
-			],
+			'CitizenPreferencesConfig' => $config,
 		] );
 
 		$attrs = $this->getSkinHtmlClasses();
@@ -182,6 +224,23 @@ class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 		);
 		$this->assertStringNotContainsString(
 			'citizen-feature-custom-width-clientpref-invalid',
+			$attrs
+		);
+	}
+
+	public function testDisabledPreferenceStillAppliesDefault(): void {
+		$config = $this->getDefaultPreferencesConfig();
+		$config['citizen-feature-custom-width']['enabled'] = false;
+		$config['citizen-feature-custom-width']['default'] = 'wide';
+		$this->overrideConfigValues( [
+			'CitizenPreferencesConfig' => $config,
+		] );
+
+		$attrs = $this->getSkinHtmlClasses();
+
+		// Default still applied as CSS class even when disabled
+		$this->assertStringContainsString(
+			'citizen-feature-custom-width-clientpref-wide',
 			$attrs
 		);
 	}
@@ -235,16 +294,18 @@ class SkinCitizenTest extends MediaWikiIntegrationTestCase {
 	}
 
 	public function testTemplateDataExposesEnabledPreferencesFlag(): void {
-		$this->overrideConfigValues( [
-			'CitizenEnablePreferences' => true,
-		] );
-
+		// Default config has all prefs enabled
 		$this->assertTrue( $this->getSkinTemplateData()['is-preferences-enabled'] );
 	}
 
 	public function testTemplateDataExposesDisabledPreferencesFlag(): void {
+		$config = $this->getDefaultPreferencesConfig();
+		foreach ( $config as &$pref ) {
+			$pref['enabled'] = false;
+		}
+		unset( $pref );
 		$this->overrideConfigValues( [
-			'CitizenEnablePreferences' => false,
+			'CitizenPreferencesConfig' => $config,
 		] );
 
 		$this->assertFalse( $this->getSkinTemplateData()['is-preferences-enabled'] );

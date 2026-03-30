@@ -55,9 +55,10 @@ globalThis.matchMedia = vi.fn( () => ( {
 
 let App;
 
-const getDefaultConfig = require( '../../../resources/skins.citizen.preferences/defaultConfig.js' );
+const buildConfig = require( '../../../resources/skins.citizen.preferences/defaultConfig.js' );
 const { normalizeConfig } = require( '../../../resources/skins.citizen.preferences/configRegistry.js' );
-const BASE_CONFIG = normalizeConfig( getDefaultConfig() );
+const preferencesConfigMock = require( '../mocks/preferencesConfig.js' );
+const BASE_CONFIG = normalizeConfig( buildConfig( preferencesConfigMock.wgCitizenPreferencesConfig ) );
 
 /**
  * Build a normalized default config for testing.

@@ -16,10 +16,10 @@
 	},
 	"attributes": {
 		"DarkMode": {
-			"Disabled": ["citizen"]
+			"Disabled": [ "citizen" ]
 		},
 		"VisualEditor": {
-			"IconSkins": ["citizen"]
+			"IconSkins": [ "citizen" ]
 		}
 	},
 	"ValidSkinNames": {
@@ -35,7 +35,7 @@
 				"UserGroupManager",
 				"UrlUtils"
 			],
-			"optional_services": ["MobileFrontend.Context"],
+			"optional_services": [ "MobileFrontend.Context" ],
 			"args": [
 				{
 					"name": "citizen",
@@ -58,7 +58,7 @@
 						"variants",
 						"associated-pages"
 					],
-					"scripts": ["skins.citizen.scripts"],
+					"scripts": [ "skins.citizen.scripts" ],
 					"styles": [
 						"skins.citizen.styles",
 						"skins.citizen.codex.styles",
@@ -86,7 +86,7 @@
 		"citizen": "resources/mediawiki.less"
 	},
 	"MessagesDirs": {
-		"Citizen": ["i18n"]
+		"Citizen": [ "i18n" ]
 	},
 	"AutoloadNamespaces": {
 		"MediaWiki\\Skins\\Citizen\\": "includes/"
@@ -98,7 +98,7 @@
 	"APIModules": {
 		"appmanifest": {
 			"class": "MediaWiki\\Skins\\Citizen\\Api\\ApiWebappManifest",
-			"services": ["ContentLanguage", "HttpRequestFactory", "UrlUtils"]
+			"services": [ "ContentLanguage", "HttpRequestFactory", "UrlUtils" ]
 		}
 	},
 	"HookHandlers": {
@@ -124,12 +124,12 @@
 				"i18n-headings": true,
 				"toc": false
 			},
-			"styles": ["resources/skins.citizen.styles/skin.less"]
+			"styles": [ "resources/skins.citizen.styles/skin.less" ]
 		},
 		"skins.citizen.codex.styles": {
 			"class": "MediaWiki\\ResourceLoader\\CodexModule",
 			"codexStyleOnly": true,
-			"codexComponents": ["CdxButton"],
+			"codexComponents": [ "CdxButton" ],
 			"styles": [
 				"resources/skins.citizen.codex.styles/CdxButton.less",
 				"resources/skins.citizen.codex.styles/CdxCheckbox.less",
@@ -137,10 +137,10 @@
 			]
 		},
 		"skins.citizen.styles.fonts.cjk": {
-			"styles": ["resources/skins.citizen.styles.fonts.cjk/index.less"]
+			"styles": [ "resources/skins.citizen.styles.fonts.cjk/index.less" ]
 		},
 		"skins.citizen.styles.fonts.ar": {
-			"styles": ["resources/skins.citizen.styles.fonts.ar/index.less"]
+			"styles": [ "resources/skins.citizen.styles.fonts.ar/index.less" ]
 		},
 		"skins.citizen.scripts": {
 			"packageFiles": [
@@ -173,7 +173,7 @@
 				"resources/skins.citizen.scripts/tableOfContentsSections.js",
 				{
 					"name": "resources/skins.citizen.scripts/tableOfContentsConfig.json",
-					"config": ["CitizenTableOfContentsCollapseAtCount"]
+					"config": [ "CitizenTableOfContentsCollapseAtCount" ]
 				},
 				{
 					"name": "resources/skins.citizen.scripts/templates/TableOfContents__list.mustache",
@@ -186,7 +186,7 @@
 					"type": "text"
 				}
 			],
-			"messages": ["citizen-share", "citizen-share-copied"],
+			"messages": [ "citizen-share", "citizen-share-copied" ],
 			"dependencies": [
 				"mediawiki.storage",
 				"mediawiki.page.ready",
@@ -216,15 +216,11 @@
 				{
 					"name": "resources/skins.citizen.preferences/icons.json",
 					"callback": "MediaWiki\\ResourceLoader\\CodexModule::getIcons",
-					"callbackParam": ["cdxIconAlignRight"]
+					"callbackParam": [ "cdxIconAlignRight" ]
 				},
 				{
 					"name": "resources/skins.citizen.preferences/config.json",
 					"callback": "MediaWiki\\Skins\\Citizen\\Hooks\\ResourceLoaderHooks::getCitizenPreferencesResourceLoaderConfig"
-				},
-				{
-					"name": "resources/skins.citizen.preferences/overrides.json",
-					"callback": "MediaWiki\\Skins\\Citizen\\Hooks\\ResourceLoaderHooks::getCitizenPreferencesOverrides"
 				}
 			],
 			"messages": [
@@ -273,7 +269,7 @@
 			]
 		},
 		"skins.citizen.serviceWorker": {
-			"scripts": ["resources/skins.citizen.serviceWorker/sw.js"]
+			"scripts": [ "resources/skins.citizen.serviceWorker/sw.js" ]
 		},
 		"skins.citizen.commandPalette": {
 			"class": "MediaWiki\\ResourceLoader\\CodexModule",
@@ -770,10 +766,47 @@
 	},
 	"config_prefix": "wgCitizen",
 	"config": {
-		"ThemeDefault": {
-			"value": "auto",
-			"description": "Default theme of the skin. Valid values are 'light', 'dark' and 'auto'.",
-			"descriptionmsg": "citizen-config-themedefault",
+		"PreferencesConfig": {
+			"value": {
+				"skin-theme": {
+					"enabled": true,
+					"default": "os",
+					"options": [ "os", "day", "night" ]
+				},
+				"citizen-feature-custom-font-size": {
+					"enabled": true,
+					"default": "standard",
+					"options": [ "small", "standard", "large", "xlarge" ]
+				},
+				"citizen-feature-custom-width": {
+					"enabled": true,
+					"default": "standard",
+					"options": [ "standard", "expanded", "wide", "full" ]
+				},
+				"citizen-feature-pure-black": {
+					"enabled": true,
+					"default": "0",
+					"options": [ "0", "1" ]
+				},
+				"citizen-feature-image-dimming": {
+					"enabled": true,
+					"default": "0",
+					"options": [ "0", "1" ]
+				},
+				"citizen-feature-autohide-navigation": {
+					"enabled": true,
+					"default": "1",
+					"options": [ "0", "1" ]
+				},
+				"citizen-feature-performance-mode": {
+					"enabled": true,
+					"default": "1",
+					"options": [ "0", "1" ]
+				}
+			},
+			"merge_strategy": "array_plus_2d",
+			"description": "Unified preferences configuration. Each key is a preference name with 'enabled' (bool), 'default' (string), and 'options' (array of allowed values).",
+			"descriptionmsg": "citizen-config-preferencesconfig",
 			"public": true
 		},
 		"LogoVisibleIn": {
@@ -854,27 +887,8 @@
 			"descriptionmsg": "citizen-config-enablearfonts",
 			"public": true
 		},
-		"EnablePreferences": {
-			"value": true,
-			"description": "Enables or disable preferences module",
-			"descriptionmsg": "citizen-config-enablepreferences",
-			"public": true
-		},
-		"PreferencesDefaults": {
-			"value": {
-				"citizen-feature-autohide-navigation": "1",
-				"citizen-feature-image-dimming": "0",
-				"citizen-feature-pure-black": "0",
-				"citizen-feature-custom-font-size": "standard",
-				"citizen-feature-custom-width": "standard",
-				"citizen-feature-performance-mode": "1"
-			},
-			"description": "Default values for built-in client preferences. Theme is configured separately.",
-			"descriptionmsg": "citizen-config-preferencesdefaults",
-			"public": true
-		},
 		"OverflowInheritedClasses": {
-			"value": ["floatleft", "floatright"],
+			"value": [ "floatleft", "floatright" ],
 			"description": "Defines css classes inherited by overflow wrapper",
 			"descriptionmsg": "citizen-config-overflowinheritedclasses",
 			"public": true
@@ -903,7 +917,7 @@
 			"public": true
 		},
 		"SearchNamespaceButtons": {
-			"value": [0],
+			"value": [ 0 ],
 			"description": "Namespace IDs to show as quick-filter buttons in the search palette. Main (0) is always first and active by default.",
 			"public": true
 		}

@@ -64,31 +64,17 @@ The sticky header and some overlays use a frosted glass effect — a heavier blu
 
 ## Remove or modify preferences
 
-Admins can remove or customize any built-in preference through `MediaWiki:Citizen-preferences.json`. See the [preferences documentation](/customization/preferences) for the full schema.
+Admins can customize preferences through `$wgCitizenPreferencesConfig` in `LocalSettings.php`. See the [preferences documentation](/customization/preferences) for the full schema.
 
 For example, to keep only light and dark in the theme switcher (removing automatic mode):
 
-```json
-{
-  "preferences": {
-    "skin-theme": {
-      "options": [
-        { "value": "day", "labelMsg": "citizen-theme-day-label" },
-        { "value": "night", "labelMsg": "citizen-theme-night-label" }
-      ],
-      "columns": 2
-    }
-  }
-}
+```php [LocalSettings.php]
+$wgCitizenPreferencesConfig['skin-theme']['options'] = ['day', 'night'];
 ```
 
-To hide a preference from the panel entirely, set it to `null`:
+To hide a preference from the panel entirely (the default still applies):
 
-```json
-{
-  "preferences": {
-    "citizen-feature-pure-black": null,
-    "citizen-feature-autohide-navigation": null
-  }
-}
+```php [LocalSettings.php]
+$wgCitizenPreferencesConfig['citizen-feature-pure-black']['enabled'] = false;
+$wgCitizenPreferencesConfig['citizen-feature-autohide-navigation']['enabled'] = false;
 ```

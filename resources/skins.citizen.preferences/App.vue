@@ -1,8 +1,5 @@
 <template>
-	<template
-		v-for="section in sections"
-		:key="section.key"
-	>
+	<template v-for="section in sections" :key="section.key">
 		<section
 			v-if="section.preferences.length"
 			class="citizen-preferences-section"
@@ -17,24 +14,30 @@
 				>
 					<cdx-toggle-switch
 						v-if="pref.type === 'switch'"
-						v-show="visibilities[ pref.featureName ]"
+						v-show="visibilities[pref.featureName]"
 						:id="'skin-client-prefs-' + pref.featureName"
-						:model-value="values[ pref.featureName ] === '1'"
+						:model-value="
+							values[pref.featureName] === pref.options[1].value
+						"
 						:align-switch="true"
 						class="citizen-preferences-group"
-						@update:model-value="setValue( pref.featureName, $event ? '1' : '0' )"
+						@update:model-value="
+							setValue(
+								pref.featureName,
+								$event ?
+									pref.options[1].value :
+									pref.options[0].value
+							)
+						"
 					>
 						{{ pref.heading }}
-						<template
-							v-if="pref.description"
-							#description
-						>
+						<template v-if="pref.description" #description>
 							{{ pref.description }}
 						</template>
 					</cdx-toggle-switch>
 					<cdx-field
 						v-else
-						v-show="visibilities[ pref.featureName ]"
+						v-show="visibilities[pref.featureName]"
 						:id="'skin-client-prefs-' + pref.featureName"
 						:is-fieldset="true"
 						class="citizen-preferences-group"
@@ -42,25 +45,26 @@
 						<template #label>
 							{{ pref.heading }}
 						</template>
-						<template
-							v-if="pref.description"
-							#description
-						>
+						<template v-if="pref.description" #description>
 							{{ pref.description }}
 						</template>
 						<cdx-select
 							v-if="pref.type === 'select'"
 							:menu-items="pref.menuItems"
-							:selected="values[ pref.featureName ]"
-							@update:selected="setValue( pref.featureName, $event )"
+							:selected="values[pref.featureName]"
+							@update:selected="
+								setValue( pref.featureName, $event )
+							"
 						></cdx-select>
 						<radio-group
 							v-else
-							:model-value="values[ pref.featureName ]"
+							:model-value="values[pref.featureName]"
 							:options="pref.options"
 							:feature-name="pref.featureName"
 							:columns="pref.columns"
-							@update:model-value="setValue( pref.featureName, $event )"
+							@update:model-value="
+								setValue( pref.featureName, $event )
+							"
 						></radio-group>
 					</cdx-field>
 				</template>
@@ -70,9 +74,18 @@
 </template>
 
 <script>
-const { defineComponent, computed, inject, reactive, ref, watch } = require( 'vue' );
+const {
+	defineComponent,
+	computed,
+	inject,
+	reactive,
+	ref,
+	watch
+} = require( 'vue' );
 const { NormalizedPreferencesConfig } = require( './types.js' );
-const { CdxField, CdxSelect, CdxToggleSwitch } = mw.loader.require( 'skins.citizen.preferences.codex' );
+const { CdxField, CdxSelect, CdxToggleSwitch } = mw.loader.require(
+	'skins.citizen.preferences.codex'
+);
 const RadioGroup = require( './RadioGroup.vue' );
 const useVisibility = require( './useVisibility.js' );
 const { resolveLabel } = require( './configRegistry.js' );
@@ -90,8 +103,7 @@ function getThemePreviewColors( value ) {
 	const root = document.documentElement;
 	const themeClassPattern = /^skin-theme-clientpref-/;
 
-	const existing = Array.from( root.classList ).filter(
-		( cls ) => themeClassPattern.test( cls )
+	const existing = Array.from( root.classList ).filter( ( cls ) => themeClassPattern.test( cls )
 	);
 	existing.forEach( ( cls ) => root.classList.remove( cls ) );
 	root.classList.add( `skin-theme-clientpref-${ value }` );
@@ -132,22 +144,29 @@ module.exports = exports = defineComponent( {
 		 * @param {Object} prefConfig
 		 */
 		function initValue( featureName, prefConfig ) {
-			if ( !Array.isArray( prefConfig.options ) || prefConfig.options.length === 0 ) {
+			if (
+				!Array.isArray( prefConfig.options ) ||
+				prefConfig.options.length === 0
+			) {
 				return;
 			}
 			const storedValue = clientPrefs.get( featureName );
 			const allowedValues = new Set(
 				prefConfig.options.map( ( opt ) => opt.value )
 			);
-			values[ featureName ] = (
-				typeof storedValue === 'string' && allowedValues.has( storedValue )
-			) ? storedValue : prefConfig.options[ 0 ].value;
+			values[ featureName ] =
+				typeof storedValue === 'string' &&
+				allowedValues.has( storedValue ) ?
+					storedValue :
+					prefConfig.options[ 0 ].value;
 		}
 
 		// Initialize all preferences that exist at mount time.
 		// useVisibility composables must be called during setup() so that
 		// their onMounted/onUnmounted lifecycle hooks register correctly.
-		for ( const [ featureName, prefConfig ] of Object.entries( config.preferences ) ) {
+		for ( const [ featureName, prefConfig ] of Object.entries(
+			config.preferences
+		) ) {
 			initValue( featureName, prefConfig );
 			const condition = prefConfig.visibilityCondition || 'always';
 			const { isVisible } = useVisibility( condition, themeValue );
@@ -168,7 +187,9 @@ module.exports = exports = defineComponent( {
 		watch(
 			() => Object.keys( config.preferences ),
 			() => {
-				for ( const [ featureName, prefConfig ] of Object.entries( config.preferences ) ) {
+				for ( const [ featureName, prefConfig ] of Object.entries(
+					config.preferences
+				) ) {
 					if ( !( featureName in values ) ) {
 						initValue( featureName, prefConfig );
 						visibilities[ featureName ] = computed( () => true );
@@ -179,51 +200,59 @@ module.exports = exports = defineComponent( {
 
 		// eslint-disable-next-line arrow-body-style
 		const sections = computed( () => {
-			return Object.entries( config.sections )
-				.map( ( [ key, sectionDef ] ) => {
-					const sectionPrefs = Object.entries( config.preferences )
-						.filter( ( [ , pref ] ) => pref.section === key )
-						.map( ( [ featureName, prefConfig ] ) => {
-							const options = prefConfig.options.map( ( opt ) => {
-								const option = {
-									value: opt.value,
-									label: resolveLabel( opt, 'label' )
-								};
-								if ( featureName === 'skin-theme' ) {
-									option.previewColors =
-										getThemePreviewColors( opt.value );
-								}
-								return option;
-							} );
-
-							const pref = {
-								featureName,
-								heading: resolveLabel( prefConfig, 'label' ),
-								description: resolveLabel(
-									prefConfig, 'description'
-								),
-								type: prefConfig.type,
-								columns: prefConfig.columns || 2,
-								options
+			return Object.entries( config.sections ).map( ( [ key, sectionDef ] ) => {
+				const sectionPrefs = Object.entries( config.preferences )
+					.filter( ( [ , pref ] ) => pref.section === key )
+					.map( ( [ featureName, prefConfig ] ) => {
+						const options = prefConfig.options.map( ( opt ) => {
+							const option = {
+								value: opt.value,
+								label: resolveLabel( opt, 'label' )
 							};
-
-							if ( pref.type === 'select' ) {
-								pref.menuItems = options;
+							if ( featureName === 'skin-theme' ) {
+								option.previewColors = getThemePreviewColors(
+									opt.value
+								);
 							}
-
-							return pref;
+							return option;
 						} );
 
-					return {
-						key,
-						label: resolveLabel( sectionDef, 'label' ),
-						preferences: sectionPrefs
-					};
-				} );
+						const pref = {
+							featureName,
+							heading: resolveLabel( prefConfig, 'label' ),
+							description: resolveLabel(
+								prefConfig,
+								'description'
+							),
+							type: prefConfig.type,
+							columns: prefConfig.columns || 2,
+							options
+						};
+
+						if ( pref.type === 'select' ) {
+							pref.menuItems = options;
+						}
+
+						return pref;
+					} );
+
+				return {
+					key,
+					label: resolveLabel( sectionDef, 'label' ),
+					preferences: sectionPrefs
+				};
+			} );
 		} );
 
 		// Fires mw.hook( 'citizen.preferences.changed' ) with ( featureName, value )
 		function setValue( featureName, value ) {
+			const prefConfig = config.preferences[ featureName ];
+			if ( prefConfig ) {
+				const allowed = prefConfig.options.map( ( opt ) => opt.value );
+				if ( !allowed.includes( value ) ) {
+					return;
+				}
+			}
 			clientPrefs.set( featureName, value );
 			values[ featureName ] = value;
 
@@ -267,8 +296,7 @@ module.exports = exports = defineComponent( {
 	}
 
 	&__content {
-		display: flex;
-		flex-direction: column;
+		display: grid;
 		row-gap: var( --space-sm );
 	}
 

@@ -39,30 +39,6 @@ use SkinTemplate;
  */
 class SkinCitizen extends SkinMustache {
 
-	private const CLIENTPREFS_THEME_MAP = [
-		'auto' => 'os',
-		'light' => 'day',
-		'dark' => 'night'
-	];
-
-	private const DEFAULT_CLIENT_PREFS = [
-		'citizen-feature-autohide-navigation' => '1',
-		'citizen-feature-image-dimming' => '0',
-		'citizen-feature-pure-black' => '0',
-		'citizen-feature-custom-font-size' => 'standard',
-		'citizen-feature-custom-width' => 'standard',
-		'citizen-feature-performance-mode' => '1',
-	];
-
-	private const CLIENT_PREFS_ALLOWED_VALUES = [
-		'citizen-feature-autohide-navigation' => [ '0', '1' ],
-		'citizen-feature-image-dimming' => [ '0', '1' ],
-		'citizen-feature-pure-black' => [ '0', '1' ],
-		'citizen-feature-custom-font-size' => [ 'small', 'standard', 'large', 'xlarge' ],
-		'citizen-feature-custom-width' => [ 'standard', 'expanded', 'wide', 'full' ],
-		'citizen-feature-performance-mode' => [ '0', '1' ],
-	];
-
 	private const LOGO_PLACEMENTS = [ 'home', 'drawer', 'footer' ];
 	private const WORDMARK_PLACEMENTS = [ 'drawer', 'footer' ];
 
@@ -122,15 +98,9 @@ class SkinCitizen extends SkinMustache {
 		$config = $this->getConfig();
 		$classes = [];
 
-		// Theme
-		$theme = $config->get( 'CitizenThemeDefault' );
-		if ( isset( self::CLIENTPREFS_THEME_MAP[$theme] ) ) {
-			$classes[] = 'skin-theme-clientpref-' . self::CLIENTPREFS_THEME_MAP[$theme];
-		}
-
-		// Default client preferences
-		foreach ( $this->getClientPreferenceDefaults( $config ) as $feature => $value ) {
-			$classes[] = $feature . '-clientpref-' . $value;
+		// Client preferences (includes theme)
+		foreach ( self::getPreferencesConfig( $config ) as $feature => $prefConfig ) {
+			$classes[] = $feature . '-clientpref-' . $prefConfig['default'];
 		}
 
 		// Header position
@@ -266,7 +236,7 @@ class SkinCitizen extends SkinMustache {
 			$this->prepareStickyHeaderTagline( $parentData['data-page-heading']['html-tagline'] );
 
 		$this->applyBrandingTemplateData( $parentData, $config );
-		$parentData['is-preferences-enabled'] = $config->get( 'CitizenEnablePreferences' );
+		$parentData['is-preferences-enabled'] = self::isPreferencesEnabled( $config );
 
 		$parentData['html-before-page-header'] = $this->getBeforePageHeaderHtml();
 
@@ -307,24 +277,53 @@ class SkinCitizen extends SkinMustache {
 	}
 
 	/**
-	 * @return array<string, string>
+	 * Read and validate the unified PreferencesConfig.
+	 *
+	 * @return array<string, array{enabled: bool, default: string, options: string[]}>
 	 */
-	private function getClientPreferenceDefaults( Config $config ): array {
-		$defaults = self::DEFAULT_CLIENT_PREFS;
-		$configuredDefaults = $config->get( 'CitizenPreferencesDefaults' );
-
-		if ( !is_array( $configuredDefaults ) ) {
-			return $defaults;
+	public static function getPreferencesConfig( Config $config ): array {
+		$raw = $config->get( 'CitizenPreferencesConfig' );
+		if ( !is_array( $raw ) ) {
+			return [];
 		}
 
-		foreach ( self::CLIENT_PREFS_ALLOWED_VALUES as $feature => $allowedValues ) {
-			$configuredValue = $configuredDefaults[$feature] ?? null;
-			if ( is_string( $configuredValue ) && in_array( $configuredValue, $allowedValues, true ) ) {
-				$defaults[$feature] = $configuredValue;
+		$result = [];
+		foreach ( $raw as $feature => $prefConfig ) {
+			if ( !is_array( $prefConfig ) ) {
+				continue;
+			}
+
+			$options = $prefConfig['options'] ?? [];
+			if ( !is_array( $options ) || !$options ) {
+				continue;
+			}
+
+			$default = $prefConfig['default'] ?? $options[0];
+			if ( !in_array( $default, $options, true ) ) {
+				$default = $options[0];
+			}
+
+			$result[$feature] = [
+				'enabled' => (bool)( $prefConfig['enabled'] ?? true ),
+				'default' => $default,
+				'options' => $options,
+			];
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Whether any preference is both enabled and has at least 2 options
+	 * (i.e. something the user can actually change).
+	 */
+	public static function isPreferencesEnabled( Config $config ): bool {
+		foreach ( self::getPreferencesConfig( $config ) as $prefConfig ) {
+			if ( $prefConfig['enabled'] && count( $prefConfig['options'] ) >= 2 ) {
+				return true;
 			}
 		}
-
-		return $defaults;
+		return false;
 	}
 
 	/**

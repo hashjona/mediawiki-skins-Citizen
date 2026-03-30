@@ -97,7 +97,7 @@ function main( window ) {
 	dropdown.init( { document, window } );
 	createLastModified( { document, Intl } ).init();
 	createShare( { document, window, mw, navigator } ).init();
-	createPerformanceMode( { document, mw } ).init();
+	createPerformanceMode( { document, mw, config } ).init();
 
 	mw.hook( 'wikipage.content' ).add( ( content ) => {
 		// content is a jQuery object
@@ -108,7 +108,7 @@ function main( window ) {
 	} );
 
 	// Preferences module
-	if ( config.wgCitizenEnablePreferences === true ) {
+	if ( config.wgCitizenPreferencesEnabled === true ) {
 		initPreferences( { document, mw } );
 	}
 

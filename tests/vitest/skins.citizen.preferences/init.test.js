@@ -9,8 +9,8 @@ const mockMount = vi.fn();
 const mockProvide = vi.fn();
 Vue.createMwApp = vi.fn( () => ( { provide: mockProvide, mount: mockMount } ) );
 
-// Mutable mock — modify .overrides/.messages between tests
-const overridesMock = require( '../mocks/preferencesOverrides.js' );
+// Mutable mock — modify the config between tests
+const configMock = require( '../mocks/preferencesConfig.js' );
 
 let initApp;
 
@@ -27,11 +27,7 @@ afterEach( () => {
 	Vue.createMwApp = vi.fn( () => ( { provide: mockProvide, mount: mockMount } ) );
 	mockMount.mockClear();
 	mockProvide.mockClear();
-	mw.messages.set.mockClear();
 	document.body.innerHTML = '';
-	// Reset overrides mock to defaults
-	overridesMock.overrides = null;
-	overridesMock.messages = {};
 	// Reset register hook between tests
 	mw.hook( 'citizen.preferences.register' )._reset();
 } );
@@ -52,7 +48,7 @@ describe( 'initApp', () => {
 		);
 	} );
 
-	it( 'should provide default config when no overrides exist', () => {
+	it( 'should provide config built from server PreferencesConfig', () => {
 		document.body.innerHTML = '<div id="citizen-preferences-content"></div>';
 
 		initApp();
@@ -69,51 +65,30 @@ describe( 'initApp', () => {
 		);
 	} );
 
-	it( 'should merge overrides into default config', () => {
+	it( 'should exclude disabled preferences from config', () => {
 		document.body.innerHTML = '<div id="citizen-preferences-content"></div>';
-		overridesMock.overrides = {
-			sections: { custom: { labelMsg: 'custom-label' } }
+		const original = configMock.wgCitizenPreferencesConfig[ 'citizen-feature-pure-black' ];
+		configMock.wgCitizenPreferencesConfig[ 'citizen-feature-pure-black' ] = {
+			...original,
+			enabled: false
 		};
 
 		initApp();
 
-		expect( mockProvide ).toHaveBeenCalledWith(
-			'preferencesConfig',
-			expect.objectContaining( {
-				sections: expect.objectContaining( {
-					appearance: expect.any( Object ),
-					behavior: expect.any( Object ),
-					custom: expect.objectContaining( { labelMsg: 'custom-label' } )
-				} )
-			} )
+		const configCall = mockProvide.mock.calls.find(
+			( args ) => args[ 0 ] === 'preferencesConfig'
 		);
+		expect( configCall[ 1 ].preferences ).not.toHaveProperty( 'citizen-feature-pure-black' );
+
+		// Restore
+		configMock.wgCitizenPreferencesConfig[ 'citizen-feature-pure-black' ] = original;
 	} );
 
-	it( 'should register pre-resolved messages from overrides', () => {
-		document.body.innerHTML = '<div id="citizen-preferences-content"></div>';
-		overridesMock.messages = { 'custom-label': 'Custom Section' };
-
-		initApp();
-
-		expect( mw.messages.set ).toHaveBeenCalledWith( {
-			'custom-label': 'Custom Section'
-		} );
-	} );
-
-	it( 'should not call mw.messages.set when messages are empty', () => {
+	it( 'should provide themeDefault from server config', () => {
 		document.body.innerHTML = '<div id="citizen-preferences-content"></div>';
 
 		initApp();
 
-		expect( mw.messages.set ).not.toHaveBeenCalled();
-	} );
-
-	it( 'should provide themeDefault mapped from server config', () => {
-		document.body.innerHTML = '<div id="citizen-preferences-content"></div>';
-
-		initApp();
-
-		// preferencesConfig.js mock has wgCitizenThemeDefault: 'auto' → maps to 'os'
 		expect( mockProvide ).toHaveBeenCalledWith( 'themeDefault', 'os' );
 	} );
 

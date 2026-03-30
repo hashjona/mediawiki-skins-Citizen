@@ -22,20 +22,6 @@ $wgCitizenHeaderPosition = 'left';
 
 **Values**: `'left'`, `'right'`, `'top'`, `'bottom'`
 
-### `$wgCitizenThemeDefault`
-
-Sets the default color theme for new visitors.
-
-```php [LocalSettings.php]
-$wgCitizenThemeDefault = 'auto';
-```
-
-**Values**:
-
-- `'auto'`: Matches the user's system or browser preference
-- `'light'`: Always starts in light mode
-- `'dark'`: Always starts in dark mode
-
 ### `$wgCitizenLogoVisibleIn`
 
 Controls where the icon logo is rendered in the skin chrome.
@@ -174,52 +160,47 @@ $wgCitizenEnableCJKFonts = false;
 
 **Values**: `true`, `false`
 
-### `$wgCitizenEnablePreferences`
+### `$wgCitizenPreferencesConfig`
 
-Enables the user [preferences panel](/customization/preferences), allowing visitors to customize their experience. The panel is extensible — admins can add custom preferences via on-wiki JSON, and gadgets can register their own options at runtime.
-When disabled, Citizen does not render the built-in preferences UI in the header or user menu.
+Unified configuration for Citizen's [preferences panel](/customization/preferences). Each key is a preference name with three fields: `enabled` (whether the UI control is shown), `default` (the default value), and `options` (allowed values).
 
-```php [LocalSettings.php]
-$wgCitizenEnablePreferences = true;
-```
-
-**Values**: `true`, `false`
-
-### `$wgCitizenPreferencesDefaults`
-
-Sets the default values for Citizen's built-in client preferences.
-This applies even when the preferences panel is disabled.
-Theme is still controlled separately by `$wgCitizenThemeDefault`.
-Supported width values are `standard`, `expanded`, `wide`, and `full`.
+The defaults are defined in `skin.json` and work out of the box. Use `LocalSettings.php` to override specific settings:
 
 ```php [LocalSettings.php]
-$wgCitizenPreferencesDefaults = [
-    'citizen-feature-autohide-navigation' => '1',
-    'citizen-feature-image-dimming' => '0',
-    'citizen-feature-pure-black' => '0',
-    'citizen-feature-custom-font-size' => 'standard',
-    'citizen-feature-custom-width' => 'expanded',
-    'citizen-feature-performance-mode' => '1'
-];
+// Set default theme to dark
+$wgCitizenPreferencesConfig['skin-theme']['default'] = 'night';
+
+// Default to expanded width
+$wgCitizenPreferencesConfig['citizen-feature-custom-width']['default'] = 'expanded';
+
+// Only allow standard and wide widths
+$wgCitizenPreferencesConfig['citizen-feature-custom-width']['options'] = ['standard', 'wide'];
+
+// Hide font size setting (default still applies)
+$wgCitizenPreferencesConfig['citizen-feature-custom-font-size']['enabled'] = false;
 ```
 
-Only built-in Citizen preferences are supported here.
-Invalid values are ignored and fall back to the skin defaults.
+**Fields**:
+
+- `enabled` (bool): Whether the UI control appears in the preferences panel. When `false`, the `default` still applies as a CSS class but users cannot change it. Default: `true`
+- `default` (string): The default value for the preference. Must be one of the `options` values
+- `options` (array): Allowed values. Remove values from this array to hide them from the UI
+
+**Built-in preferences**:
+
+| Preference | Default | Options |
+| :--- | :--- | :--- |
+| `skin-theme` | `'os'` | `'os'`, `'day'`, `'night'` |
+| `citizen-feature-custom-font-size` | `'standard'` | `'small'`, `'standard'`, `'large'`, `'xlarge'` |
+| `citizen-feature-custom-width` | `'standard'` | `'standard'`, `'expanded'`, `'wide'`, `'full'` |
+| `citizen-feature-pure-black` | `'0'` | `'0'`, `'1'` |
+| `citizen-feature-image-dimming` | `'0'` | `'0'`, `'1'` |
+| `citizen-feature-autohide-navigation` | `'1'` | `'0'`, `'1'` |
+| `citizen-feature-performance-mode` | `'1'` | `'0'`, `'1'` |
+
+When all preferences have `enabled: false`, the preferences panel is hidden entirely.
+Invalid defaults fall back to the first value in `options`.
 When the preferences panel is enabled, any saved browser preferences still override these defaults for that user.
-
-Example setup:
-
-```php [LocalSettings.php]
-$wgCitizenEnablePreferences = false;
-$wgCitizenPreferencesDefaults = [
-    'citizen-feature-autohide-navigation' => '1',
-    'citizen-feature-image-dimming' => '0',
-    'citizen-feature-pure-black' => '0',
-    'citizen-feature-custom-font-size' => 'standard',
-    'citizen-feature-custom-width' => 'expanded',
-    'citizen-feature-performance-mode' => '1'
-];
-```
 
 ### `$wgCitizenOverflowInheritedClasses`
 

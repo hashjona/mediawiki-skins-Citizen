@@ -16,8 +16,7 @@
 
 /**
  * Configuration for a single preference entry.
- * Used in both built-in defaults and admin overrides from
- * MediaWiki:Citizen-preferences.json.
+ * Used in both built-in defaults and runtime registrations.
  *
  * @typedef {Object} PreferenceConfig
  * @property {string} section Key of the section this preference belongs to.

@@ -1,20 +1,18 @@
 const Vue = require( 'vue' );
 const { reactive } = Vue;
 const App = require( './App.vue' );
-const getDefaultConfig = require( './defaultConfig.js' );
+const buildConfig = require( './defaultConfig.js' );
 const serverConfig = require( './config.json' );
-const overrideData = require( './overrides.json' );
 const {
 	mergeConfigs, normalizeConfig
 } = require( './configRegistry.js' );
 
-const THEME_CONFIG_MAP = { auto: 'os', light: 'day', dark: 'night' };
-
 /**
  * Initialize the preferences panel Vue app.
  *
- * Overrides and their i18n messages are injected at module-build time
- * by the PHP ResourceLoader callback, so no runtime API call is needed.
+ * The server-provided PreferencesConfig (enabled, default, options per
+ * preference) is merged with built-in UI metadata (labels, sections,
+ * types, visibility) to produce the full config for the Vue app.
  *
  * After mounting, fires `mw.hook('citizen.preferences.register')` with a
  * `register( config )` callback that gadgets/extensions can use to add
@@ -26,15 +24,9 @@ function initApp() {
 		return;
 	}
 
-	// Register pre-resolved message texts from admin overrides
-	if ( overrideData.messages && Object.keys( overrideData.messages ).length ) {
-		mw.messages.set( overrideData.messages );
-	}
-
-	const defaults = getDefaultConfig();
-	const config = reactive(
-		normalizeConfig( mergeConfigs( defaults, overrideData.overrides ) )
-	);
+	const prefsConfig = serverConfig.wgCitizenPreferencesConfig || {};
+	const defaults = buildConfig( prefsConfig );
+	const config = reactive( normalizeConfig( defaults ) );
 
 	/**
 	 * Merge a registration object into the live reactive config.
@@ -57,7 +49,7 @@ function initApp() {
 		Object.assign( config.preferences, updated.preferences );
 	}
 
-	const themeDefault = THEME_CONFIG_MAP[ serverConfig.wgCitizenThemeDefault ] || 'os';
+	const themeDefault = ( prefsConfig[ 'skin-theme' ] || {} ).default || 'os';
 
 	const app = Vue.createMwApp( App );
 	app.provide( 'preferencesConfig', config );
@@ -71,8 +63,6 @@ function initApp() {
 // Note: initApp() auto-executes at import time below. In tests, the import
 // happens in beforeAll when no mount point exists, so it safely no-ops.
 // Tests then call initApp() explicitly with their own DOM fixtures.
-// The overrideData reference is shared with the mock, so mutations in
-// tests are visible to subsequent initApp() calls.
 module.exports = { initApp };
 
 // Auto-execute

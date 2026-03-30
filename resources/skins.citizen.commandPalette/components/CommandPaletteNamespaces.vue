@@ -9,10 +9,10 @@
 			class="citizen-command-palette-namespaces__button"
 			:class="{
 				'citizen-command-palette-namespaces__button--active':
-					ns.id === activeNamespaceId,
+					ns.id === activeNamespaceId
 			}"
 			:title="ns.name"
-			@click="$emit('select-namespace', ns)"
+			@click="$emit( 'select-namespace', ns )"
 		>
 			{{ ns.label }}
 		</button>
@@ -20,86 +20,86 @@
 </template>
 
 <script>
-const { defineComponent, computed } = require("vue");
-const config = require("../config.json");
+const { defineComponent, computed } = require( 'vue' );
+const config = require( '../config.json' );
 
-const MAIN_NAMESPACE_ID = "0";
+const MAIN_NAMESPACE_ID = '0';
 
 // @vue/component
-module.exports = exports = defineComponent({
-	name: "CommandPaletteNamespaces",
+module.exports = exports = defineComponent( {
+	name: 'CommandPaletteNamespaces',
 	props: {
 		tokens: {
 			type: Array,
-			default: () => [],
+			default: () => []
 		},
 		activeMode: {
 			type: Object,
-			default: null,
-		},
+			default: null
+		}
 	},
-	emits: ["select-namespace"],
-	setup(props) {
-		const allowedIds = (config.wgCitizenSearchNamespaceButtons || []).map(
-			String,
+	emits: [ 'select-namespace' ],
+	setup( props ) {
+		const allowedIds = ( config.wgCitizenSearchNamespaceButtons || [] ).map(
+			String
 		);
 
-		const namespaces = computed(() => {
+		const namespaces = computed( () => {
 			const formattedNamespaces =
-				mw.config.get("wgFormattedNamespaces") || {};
+				mw.config.get( 'wgFormattedNamespaces' ) || {};
 			const entries = [];
 
 			// Add Main namespace first if configured
-			if (allowedIds.includes(MAIN_NAMESPACE_ID)) {
-				entries.push({
+			if ( allowedIds.includes( MAIN_NAMESPACE_ID ) ) {
+				entries.push( {
 					id: MAIN_NAMESPACE_ID,
-					name: "",
+					name: '',
 					label: mw
-						.message("citizen-command-palette-namespace-main")
-						.text(),
-				});
+						.message( 'citizen-command-palette-namespace-main' )
+						.text()
+				} );
 			}
 
 			// Add configured namespaces, preserving config order
 			allowedIds
 				.filter(
-					(id) => id !== MAIN_NAMESPACE_ID && formattedNamespaces[id],
+					( id ) => id !== MAIN_NAMESPACE_ID && formattedNamespaces[ id ]
 				)
-				.forEach((id) => {
-					const name = formattedNamespaces[id];
-					entries.push({ id, name, label: name });
-				});
+				.forEach( ( id ) => {
+					const name = formattedNamespaces[ id ];
+					entries.push( { id, name, label: name } );
+				} );
 
 			return entries;
-		});
+		} );
 
-		const activeNamespaceId = computed(() => {
-			const nsToken = props.tokens.find((t) => t.modeId === "namespace");
-			if (!nsToken) {
+		const activeNamespaceId = computed( () => {
+			const nsToken = props.tokens.find( ( t ) => t.modeId === 'namespace' );
+			if ( !nsToken ) {
 				// No namespace token means searching in main namespace
 				return MAIN_NAMESPACE_ID;
 			}
 			// Token raw is like "Talk:", strip the trailing colon to match
-			const raw = nsToken.raw.replace(/:$/, "");
-			const match = namespaces.value.find((ns) => ns.name === raw);
+			const raw = nsToken.raw.replace( /:$/, '' );
+			const match = namespaces.value.find( ( ns ) => ns.name === raw );
 			return match ? match.id : null;
-		});
+		} );
 
 		return {
 			namespaces,
-			activeNamespaceId,
+			activeNamespaceId
 		};
-	},
-});
+	}
+} );
 </script>
 
 <style lang="less">
-@import "mediawiki.skin.variables.less";
+@import 'mediawiki.skin.variables.less';
 
 .citizen-command-palette-namespaces {
 	display: flex;
 	gap: @spacing-25;
-	padding: 0 var(--citizen-command-palette-side-padding) var(--space-xs);
+	padding: 0 var( --citizen-command-palette-side-padding ) var( --space-xs );
 	overflow-x: auto;
 	overscroll-behavior-x: contain;
 	-webkit-overflow-scrolling: touch;
@@ -114,25 +114,25 @@ module.exports = exports = defineComponent({
 	&__button {
 		flex-shrink: 0;
 		padding: @spacing-25 @spacing-75;
-		color: var(--color-base);
-		font-size: var(--font-size-small);
-		line-height: var(--line-height-xx-small);
+		font-size: var( --font-size-small );
+		line-height: var( --line-height-xx-small );
+		color: var( --color-base );
 		white-space: nowrap;
 		cursor: pointer;
 		background-color: transparent;
 		border: 0;
-		border-radius: var(--border-radius-pill);
-		transition-timing-function: var(--transition-timing-function-ease);
-		transition-duration: var(--transition-duration-base);
+		border-radius: var( --border-radius-pill );
+		transition-timing-function: var( --transition-timing-function-ease );
+		transition-duration: var( --transition-duration-base );
 		transition-property: background-color, color, opacity;
 
-		&:not(.citizen-command-palette-namespaces__button--active):hover {
-			opacity: var(--opacity-base);
+		&:not( .citizen-command-palette-namespaces__button--active ):hover {
+			opacity: var( --opacity-base );
 		}
 
 		&--active {
-			color: var(--color-inverted-fixed);
-			background-color: var(--color-progressive);
+			color: var( --color-inverted-fixed );
+			background-color: var( --color-progressive );
 		}
 	}
 }

@@ -2,18 +2,34 @@
 const mw = require( '../mocks/mw.js' );
 globalThis.mw = mw;
 
-let getDefaultConfig;
+let buildConfig;
+
+const ALL_ENABLED_SERVER_CONFIG = {
+	'skin-theme': { enabled: true, default: 'os', options: [ 'os', 'day', 'night' ] },
+	'citizen-feature-custom-font-size': {
+		enabled: true, default: 'standard',
+		options: [ 'small', 'standard', 'large', 'xlarge' ]
+	},
+	'citizen-feature-custom-width': {
+		enabled: true, default: 'standard',
+		options: [ 'standard', 'expanded', 'wide', 'full' ]
+	},
+	'citizen-feature-pure-black': { enabled: true, default: '0', options: [ '0', '1' ] },
+	'citizen-feature-image-dimming': { enabled: true, default: '0', options: [ '0', '1' ] },
+	'citizen-feature-autohide-navigation': { enabled: true, default: '1', options: [ '0', '1' ] },
+	'citizen-feature-performance-mode': { enabled: true, default: '1', options: [ '0', '1' ] }
+};
 
 beforeAll( async () => {
 	const mod = await import(
 		'../../../resources/skins.citizen.preferences/defaultConfig.js'
 	);
-	getDefaultConfig = mod.default || mod;
+	buildConfig = mod.default || mod;
 } );
 
-describe( 'defaultConfig', () => {
+describe( 'buildConfig', () => {
 	it( 'should return sections with appearance and behavior', () => {
-		const config = getDefaultConfig();
+		const config = buildConfig( ALL_ENABLED_SERVER_CONFIG );
 
 		expect( config.sections ).toHaveProperty( 'appearance' );
 		expect( config.sections ).toHaveProperty( 'behavior' );
@@ -21,8 +37,8 @@ describe( 'defaultConfig', () => {
 		expect( config.sections.behavior ).toHaveProperty( 'labelMsg' );
 	} );
 
-	it( 'should return all 7 built-in preferences', () => {
-		const config = getDefaultConfig();
+	it( 'should return all 7 built-in preferences when all enabled', () => {
+		const config = buildConfig( ALL_ENABLED_SERVER_CONFIG );
 		const keys = Object.keys( config.preferences );
 
 		expect( keys ).toHaveLength( 7 );
@@ -35,8 +51,19 @@ describe( 'defaultConfig', () => {
 		expect( keys ).toContain( 'citizen-feature-performance-mode' );
 	} );
 
+	it( 'should exclude disabled preferences', () => {
+		const serverConfig = {
+			...ALL_ENABLED_SERVER_CONFIG,
+			'citizen-feature-pure-black': { enabled: false, default: '0', options: [ '0', '1' ] }
+		};
+		const config = buildConfig( serverConfig );
+
+		expect( config.preferences ).not.toHaveProperty( 'citizen-feature-pure-black' );
+		expect( Object.keys( config.preferences ) ).toHaveLength( 6 );
+	} );
+
 	it( 'should assign appearance prefs to appearance section', () => {
-		const config = getDefaultConfig();
+		const config = buildConfig( ALL_ENABLED_SERVER_CONFIG );
 
 		expect( config.preferences[ 'skin-theme' ].section ).toBe( 'appearance' );
 		expect( config.preferences[ 'citizen-feature-custom-font-size' ].section )
@@ -48,7 +75,7 @@ describe( 'defaultConfig', () => {
 	} );
 
 	it( 'should assign behavior prefs to behavior section', () => {
-		const config = getDefaultConfig();
+		const config = buildConfig( ALL_ENABLED_SERVER_CONFIG );
 
 		expect( config.preferences[ 'citizen-feature-autohide-navigation' ].section )
 			.toBe( 'behavior' );
@@ -57,7 +84,7 @@ describe( 'defaultConfig', () => {
 	} );
 
 	it( 'should use long-form options with labelMsg for skin-theme', () => {
-		const config = getDefaultConfig();
+		const config = buildConfig( ALL_ENABLED_SERVER_CONFIG );
 		const themeOpts = config.preferences[ 'skin-theme' ].options;
 
 		expect( themeOpts ).toHaveLength( 3 );
@@ -67,15 +94,26 @@ describe( 'defaultConfig', () => {
 		} );
 	} );
 
-	it( 'should use short-form options for switch prefs', () => {
-		const config = getDefaultConfig();
-		const opts = config.preferences[ 'citizen-feature-pure-black' ].options;
+	it( 'should build options from server-provided options array', () => {
+		const serverConfig = {
+			...ALL_ENABLED_SERVER_CONFIG,
+			'citizen-feature-custom-width': {
+				enabled: true, default: 'standard',
+				options: [ 'standard', 'wide' ]
+			}
+		};
+		const config = buildConfig( serverConfig );
+		const opts = config.preferences[ 'citizen-feature-custom-width' ].options;
 
-		expect( opts ).toEqual( [ '0', '1' ] );
+		expect( opts ).toHaveLength( 2 );
+		expect( opts ).toEqual( [
+			{ value: 'standard', labelMsg: 'citizen-feature-custom-width-standard-label' },
+			{ value: 'wide', labelMsg: 'citizen-feature-custom-width-wide-label' }
+		] );
 	} );
 
 	it( 'should include the expanded width option between standard and wide', () => {
-		const config = getDefaultConfig();
+		const config = buildConfig( ALL_ENABLED_SERVER_CONFIG );
 		const opts = config.preferences[ 'citizen-feature-custom-width' ].options;
 
 		expect( opts ).toEqual( [
@@ -87,12 +125,22 @@ describe( 'defaultConfig', () => {
 	} );
 
 	it( 'should include type and visibilityCondition', () => {
-		const config = getDefaultConfig();
+		const config = buildConfig( ALL_ENABLED_SERVER_CONFIG );
 
 		expect( config.preferences[ 'skin-theme' ].type ).toBe( 'radio' );
 		expect( config.preferences[ 'citizen-feature-pure-black' ].type )
 			.toBe( 'switch' );
 		expect( config.preferences[ 'citizen-feature-pure-black' ].visibilityCondition )
 			.toBe( 'dark-theme' );
+	} );
+
+	it( 'should skip unknown preferences from server config', () => {
+		const serverConfig = {
+			...ALL_ENABLED_SERVER_CONFIG,
+			'unknown-gadget-pref': { enabled: true, default: '0', options: [ '0', '1' ] }
+		};
+		const config = buildConfig( serverConfig );
+
+		expect( config.preferences ).not.toHaveProperty( 'unknown-gadget-pref' );
 	} );
 } );

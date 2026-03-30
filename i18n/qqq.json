@@ -84,7 +84,7 @@
 	"citizen-config-logovisiblein": "Description for the `$wgCitizenLogoVisibleIn` skin configuration setting, which controls where the skin renders the configured icon logo image.",
 	"citizen-config-wordmarkvisiblein": "Description for the `$wgCitizenWordmarkVisibleIn` skin configuration setting, which controls where the skin renders the configured wordmark.",
 	"citizen-config-wordmarkwidths": "Description for the `$wgCitizenWordmarkWidths` skin configuration setting, which controls the CSS width applied to wordmark images in each supported placement.",
-	"citizen-config-preferencesdefaults": "Description for the `$wgCitizenPreferencesDefaults` skin configuration setting.",
+	"citizen-config-preferencesconfig": "Description for the `$wgCitizenPreferencesConfig` skin configuration setting, which controls defaults, available options, and visibility for each preference.",
 	"citizen-user-info-text-anon": "Description in the user menu when user is not logged in.",
 	"citizen-user-info-text-temp": "Description in the user menu when user is using a temporary account.",
 	"citizen-user-info-edits-label": "Label for the edit count in the user info",

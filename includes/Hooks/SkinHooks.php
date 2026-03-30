@@ -12,6 +12,7 @@ use MediaWiki\Output\OutputPage;
 use MediaWiki\Registration\ExtensionRegistry;
 use MediaWiki\ResourceLoader as RL;
 use MediaWiki\Skin\SkinComponentUtils;
+use MediaWiki\Skins\Citizen\SkinCitizen;
 use MediaWiki\Skins\Hook\SkinPageReadyConfigHook;
 use Skin;
 use SkinTemplate;
@@ -26,7 +27,7 @@ class SkinHooks implements
 	SkinBuildSidebarHook,
 	SkinPageReadyConfigHook
 {
-	private static ?string $inlineScript = null;
+	private static ?string $inlineScriptBody = null;
 
 	/**
 	 * Adds the inline theme switcher script to the page
@@ -40,15 +41,29 @@ class SkinHooks implements
 			return;
 		}
 
-		if ( $out->getConfig()->get( 'CitizenEnablePreferences' ) === true ) {
-			self::$inlineScript ??= Html::inlineScript(
-				RL\ResourceLoader::filter(
-					'minify-js',
-					file_get_contents( MW_INSTALL_PATH . '/skins/Citizen/resources/skins.citizen.scripts/inline.js' )
-				)
-			);
-			$out->addHeadItem( 'skin.citizen.inline', self::$inlineScript );
+		$config = $out->getConfig();
+		$prefsConfig = SkinCitizen::getPreferencesConfig( $config );
+
+		// Build an allowlist of feature → allowed options for inline.js.
+		// Enabled preferences list their valid options; disabled ones get
+		// an empty array so the inline script blocks stale stored values.
+		$allowlist = [];
+		foreach ( $prefsConfig as $feature => $prefConfig ) {
+			$allowlist[$feature] = $prefConfig['enabled'] ? $prefConfig['options'] : [];
 		}
+		$allowlistJson = json_encode( $allowlist, JSON_UNESCAPED_SLASHES );
+
+		self::$inlineScriptBody ??= RL\ResourceLoader::filter(
+			'minify-js',
+			file_get_contents( MW_INSTALL_PATH . '/skins/Citizen/resources/skins.citizen.scripts/inline.js' )
+		);
+
+		$out->addHeadItem(
+			'skin.citizen.inline',
+			Html::inlineScript(
+				"window.__citizenPrefsAllowlist={$allowlistJson};" . self::$inlineScriptBody
+			)
+		);
 	}
 
 	/**

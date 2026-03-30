@@ -42,9 +42,6 @@ Module._resolveFilename = function ( request, parent, ...rest ) {
 		if ( request === './config.json' ) {
 			return path.resolve( __dirname, 'mocks/preferencesConfig.js' );
 		}
-		if ( request === './overrides.json' ) {
-			return path.resolve( __dirname, 'mocks/preferencesOverrides.js' );
-		}
 		if ( request === './icons.json' ) {
 			return path.resolve( __dirname, 'mocks/preferencesIcons.js' );
 		}

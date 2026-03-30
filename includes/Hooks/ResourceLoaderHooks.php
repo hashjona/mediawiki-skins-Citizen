@@ -6,10 +6,9 @@ namespace MediaWiki\Skins\Citizen\Hooks;
 
 use MediaWiki\Config\Config;
 use MediaWiki\MainConfigNames;
-use MediaWiki\MediaWikiServices;
 use MediaWiki\Registration\ExtensionRegistry;
 use MediaWiki\ResourceLoader as RL;
-use MediaWiki\Skins\Citizen\PreferencesConfigProvider;
+use MediaWiki\Skins\Citizen\SkinCitizen;
 
 /**
  * Hooks to run relating to the resource loader
@@ -26,8 +25,10 @@ class ResourceLoaderHooks {
 		RL\Context $context,
 		Config $config
 	) {
+		$prefsConfig = SkinCitizen::getPreferencesConfig( $config );
 		return [
-			'wgCitizenEnablePreferences' => $config->get( 'CitizenEnablePreferences' ),
+			'wgCitizenPreferencesEnabled' => SkinCitizen::isPreferencesEnabled( $config ),
+			'wgCitizenPreferencesConfig' => $prefsConfig,
 			'wgCitizenOverflowInheritedClasses' => $config->get( 'CitizenOverflowInheritedClasses' ),
 			'wgCitizenOverflowNowrapClasses' => $config->get( 'CitizenOverflowNowrapClasses' ),
 		];
@@ -44,7 +45,7 @@ class ResourceLoaderHooks {
 		Config $config
 	) {
 		return [
-			'wgCitizenThemeDefault' => $config->get( 'CitizenThemeDefault' ),
+			'wgCitizenPreferencesConfig' => SkinCitizen::getPreferencesConfig( $config ),
 		];
 	}
 
@@ -66,25 +67,5 @@ class ResourceLoaderHooks {
 			'wgSearchSuggestCacheExpiry' => $config->get( MainConfigNames::SearchSuggestCacheExpiry ),
 			'wgCitizenSearchNamespaceButtons' => $config->get( 'CitizenSearchNamespaceButtons' )
 		];
-	}
-
-	/**
-	 * Return on-wiki preferences overrides with pre-resolved message texts.
-	 *
-	 * @param RL\Context $context
-	 * @param Config $config
-	 * @return array{overrides: ?array, messages: \stdClass|array<string, string>}
-	 */
-	public static function getCitizenPreferencesOverrides(
-		RL\Context $context,
-		Config $config
-	): array {
-		$services = MediaWikiServices::getInstance();
-		$provider = new PreferencesConfigProvider(
-			$services->getRevisionLookup(),
-			$services->getTitleFactory(),
-			$context
-		);
-		return $provider->getOverrides( $context->getLanguage() );
 	}
 }

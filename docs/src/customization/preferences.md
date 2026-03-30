@@ -5,11 +5,11 @@ description: How to customize the Citizen preferences panel
 
 # Preferences
 
-Citizen's preferences panel is extensible. You can add, modify, or remove preferences through two paths — and both use the same configuration schema.
+Citizen's preferences panel is extensible. You can configure built-in preferences through `LocalSettings.php`, and add new ones at runtime through the JavaScript API.
 
 <LinkGrid>
-    <LinkCard title="On-wiki JSON" href="#on-wiki-json" target="_self">
-        Create MediaWiki:Citizen-preferences.json for site-wide configuration managed by admins.
+    <LinkCard title="LocalSettings.php" href="#localsettings-php" target="_self">
+        Configure defaults, visibility, and available options for built-in preferences.
     </LinkCard>
     <LinkCard title="JavaScript API" href="#javascript-api" target="_self">
         Register preferences from any gadget or user script using mw.hook.
@@ -18,57 +18,91 @@ Citizen's preferences panel is extensible. You can add, modify, or remove prefer
 
 ## How it works
 
-Citizen ships with a set of built-in preferences (theme, font size, page width, pure black, auto-hide navigation, performance mode). Admins can override any of these, or add entirely new ones, by placing a JSON configuration on `MediaWiki:Citizen-preferences.json`. Gadgets and user scripts can do the same thing via the [JavaScript API](#javascript-api).
+Citizen ships with a set of built-in preferences (theme, font size, page width, pure black, image dimming, auto-hide navigation, performance mode). Admins can configure these — changing defaults, restricting options, or hiding them entirely — through `$wgCitizenPreferencesConfig` in `LocalSettings.php`. Gadgets and user scripts can add entirely new preferences at runtime via the [JavaScript API](#javascript-api).
 
 Changes take effect when users next open the preferences panel — the panel is lazy-loaded, so there's no need to purge caches.
 
-## Configuration schema
+## LocalSettings.php
 
-Whether you're writing JSON on-wiki or passing a config object to the JavaScript API, the shape is the same. There are two top-level keys: `sections` and `preferences`.
+The `$wgCitizenPreferencesConfig` setting controls each preference's default value, available options, and whether it appears in the UI. See the [configuration reference](/config/#wgcitizenpreferencesconfig) for the full schema.
 
-### Sections
+### Examples
+
+#### Change the default theme
+
+```php [LocalSettings.php]
+$wgCitizenPreferencesConfig['skin-theme']['default'] = 'night';
+```
+
+#### Restrict width options
+
+```php [LocalSettings.php]
+$wgCitizenPreferencesConfig['citizen-feature-custom-width']['options'] = ['standard', 'wide'];
+$wgCitizenPreferencesConfig['citizen-feature-custom-width']['default'] = 'standard';
+```
+
+#### Hide a preference
+
+The default still applies, but the user can't change it:
+
+```php [LocalSettings.php]
+$wgCitizenPreferencesConfig['citizen-feature-performance-mode']['enabled'] = false;
+```
+
+#### Disable all preferences
+
+```php [LocalSettings.php]
+foreach ( $wgCitizenPreferencesConfig as &$pref ) {
+    $pref['enabled'] = false;
+}
+unset( $pref );
+```
+
+## JavaScript API
+
+Gadgets and user scripts can register preferences at runtime using `mw.hook`. This is useful when you want a gadget to ship its own preference toggle without requiring an admin to edit `LocalSettings.php`.
+
+### Configuration schema
+
+The config object passed to `register()` has two top-level keys: `sections` and `preferences`.
+
+#### Sections
 
 Sections group related preferences together. Each section needs either an i18n message key or a literal label.
 
-Using an i18n message key:
-
-```json
+```js
 {
-  "sections": {
-    "my-section": {
-      "labelMsg": "my-extension-section-label"
+    sections: {
+        'my-section': { labelMsg: 'my-extension-section-label' }
     }
-  }
 }
 ```
 
-Using a literal label:
+Or with a literal label:
 
-```json
+```js
 {
-  "sections": {
-    "my-section": {
-      "label": "My Section"
+    sections: {
+        'my-section': { label: 'My Section' }
     }
-  }
 }
 ```
 
-### Preference entries
+#### Preference entries
 
 Each preference is keyed by its feature name.
 
-```json
+```js
 {
-  "preferences": {
-    "my-feature": {
-      "section": "my-section",
-      "type": "switch",
-      "options": ["0", "1"],
-      "labelMsg": "my-feature-name",
-      "descriptionMsg": "my-feature-description"
+    preferences: {
+        'my-feature': {
+            section: 'my-section',
+            type: 'switch',
+            options: ['0', '1'],
+            labelMsg: 'my-feature-name',
+            descriptionMsg: 'my-feature-description'
+        }
     }
-  }
 }
 ```
 
@@ -83,7 +117,7 @@ Each preference is keyed by its feature name.
 | `descriptionMsg` / `description` | string | i18n message key or literal text for the description. |
 | `columns` | number | For radio type, number of columns (default: 2). |
 
-## `label` vs `labelMsg`
+### `label` vs `labelMsg`
 
 Both sections and preferences support two ways to set their display text:
 
@@ -91,83 +125,6 @@ Both sections and preferences support two ways to set their display text:
 - **`label`** (and `description`): A literal string used as-is. Use this for single-language wikis or quick prototyping.
 
 The same pattern applies to `descriptionMsg` / `description`.
-
-## On-wiki JSON
-
-This is the simplest way to manage preferences — just create a JSON page on your wiki.
-
-### Merge behavior
-
-When you create `MediaWiki:Citizen-preferences.json`, your configuration is merged with the built-in defaults:
-
-- **Omitting** a built-in preference keeps its default.
-- Setting a preference to **`null`** removes it from the panel.
-- **Overriding** specific fields of a built-in preference merges them — unspecified fields keep their default values.
-- **Options arrays** are replaced wholesale, not merged element-by-element. If you override `options`, provide the full list.
-
-### Built-in sections
-
-Citizen ships with two sections:
-
-| Section | Preferences |
-| :--- | :--- |
-| `appearance` | Theme, font size, page width, pure black |
-| `behavior` | Auto-hide navigation, performance mode |
-
-### Examples
-
-#### Adding a custom toggle
-
-```json
-{
-  "sections": {
-    "extensions": {
-      "label": "Extensions"
-    }
-  },
-  "preferences": {
-    "my-extension-dark-reader": {
-      "section": "extensions",
-      "type": "switch",
-      "options": ["0", "1"],
-      "label": "Dark Reader",
-      "description": "Enable Dark Reader extension"
-    }
-  }
-}
-```
-
-#### Removing a built-in preference
-
-```json
-{
-  "preferences": {
-    "citizen-feature-performance-mode": null
-  }
-}
-```
-
-#### Modifying theme options
-
-This removes the "auto" option from the theme preference, leaving only day and night:
-
-```json
-{
-  "preferences": {
-    "skin-theme": {
-      "options": [
-        { "value": "day", "labelMsg": "citizen-theme-day-label" },
-        { "value": "night", "labelMsg": "citizen-theme-night-label" }
-      ],
-      "columns": 2
-    }
-  }
-}
-```
-
-## JavaScript API
-
-Gadgets and user scripts can register preferences at runtime using `mw.hook`. This is useful when you want a gadget to ship its own preference toggle without requiring an admin to edit the on-wiki JSON.
 
 ### Usage
 
@@ -180,7 +137,7 @@ mw.hook( 'citizen.preferences.register' ).add( function ( register ) {
 } );
 ```
 
-The `register` function accepts the exact same config schema described above — `sections` and `preferences` with the same field reference.
+The `register` function accepts the config schema described above.
 
 ### Timing
 

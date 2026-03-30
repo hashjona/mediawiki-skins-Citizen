@@ -25,17 +25,11 @@ Performance mode starts **on by default**. On the first page load, Citizen check
 
 ## Admin controls
 
-You can hide the performance mode toggle or lock it to a specific value through [preference overrides](./preferences#removing-a-built-in-preference). To remove it from the preferences panel entirely:
+You can hide the performance mode toggle or lock it to a specific value through [`$wgCitizenPreferencesConfig`](/config/#wgcitizenpreferencesconfig). To remove it from the preferences panel entirely:
 
-```json
-{
-  "preferences": {
-    "citizen-feature-performance-mode": null
-  }
-}
+```php [LocalSettings.php]
+$wgCitizenPreferencesConfig['citizen-feature-performance-mode']['enabled'] = false;
 ```
-
-Place this on `MediaWiki:Citizen-preferences.json`.
 
 ## Hooking into performance mode
 

@@ -18,7 +18,6 @@ class ResourceLoaderHooksTest extends MediaWikiIntegrationTestCase {
 	 */
 	public function testCitizenResourceLoaderConfig() {
 		$this->overrideConfigValues( [
-			'CitizenEnablePreferences' => false,
 			'CitizenOverflowInheritedClasses' => false,
 			'CitizenOverflowNowrapClasses' => false,
 		] );
@@ -30,8 +29,8 @@ class ResourceLoaderHooksTest extends MediaWikiIntegrationTestCase {
 			$this->getServiceContainer()->getMainConfig()
 		);
 
+		$this->assertArrayHasKey( 'wgCitizenPreferencesEnabled', $config );
 		$this->assertArraySubmapSame( [
-			'wgCitizenEnablePreferences' => false,
 			'wgCitizenOverflowInheritedClasses' => false,
 			'wgCitizenOverflowNowrapClasses' => false,
 		], $config );
@@ -42,10 +41,6 @@ class ResourceLoaderHooksTest extends MediaWikiIntegrationTestCase {
 	 * @return void
 	 */
 	public function testCitizenPreferencesResourceLoaderConfig() {
-		$this->overrideConfigValues( [
-			'CitizenThemeDefault' => 'dark',
-		] );
-
 		$rlCtxMock = $this->getMockBuilder( Context::class )->disableOriginalConstructor()->getMock();
 
 		$config = ResourceLoaderHooks::getCitizenPreferencesResourceLoaderConfig(
@@ -53,9 +48,11 @@ class ResourceLoaderHooksTest extends MediaWikiIntegrationTestCase {
 			$this->getServiceContainer()->getMainConfig()
 		);
 
-		$this->assertArraySubmapSame( [
-			'wgCitizenThemeDefault' => 'dark',
-		], $config );
+		$this->assertArrayHasKey( 'wgCitizenPreferencesConfig', $config );
+		$prefsConfig = $config['wgCitizenPreferencesConfig'];
+		$this->assertArrayHasKey( 'skin-theme', $prefsConfig );
+		$this->assertSame( 'os', $prefsConfig['skin-theme']['default'] );
+		$this->assertTrue( $prefsConfig['skin-theme']['enabled'] );
 	}
 
 }
