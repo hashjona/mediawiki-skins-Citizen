@@ -195,6 +195,8 @@ module.exports = exports = defineComponent( {
 		flex-wrap: nowrap;
 		gap: @spacing-25;
 		align-items: center;
+		overflow-x: auto;
+		scrollbar-width: none;
 	}
 
 	&__icon {
