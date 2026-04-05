@@ -196,7 +196,13 @@ module.exports = exports = defineComponent( {
 		gap: @spacing-25;
 		align-items: center;
 		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		-webkit-overflow-scrolling: touch;
 		scrollbar-width: none;
+
+		&::-webkit-scrollbar {
+			display: none;
+		}
 	}
 
 	&__icon {
