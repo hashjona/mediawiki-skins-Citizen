@@ -29,7 +29,7 @@ describe( 'createAppendQueryActions', () => {
 		expect( fulltextAction.type ).toBe( 'action' );
 		expect( fulltextAction.label ).toBe( 'test query' );
 		expect( fulltextAction.source ).toBe( 'queryAction:fulltext-search' );
-		expect( fulltextAction.url ).toBe( '/wiki/Special:Search?search=test+query' );
+		expect( fulltextAction.url ).toBe( '/wiki/Special:Search?search=test+query&fulltext=1' );
 	} );
 
 	it( 'appends media search action when extension is enabled', () => {

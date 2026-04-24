@@ -21,7 +21,7 @@ function createAppendQueryActions( config ) {
 			description: mw.message( 'citizen-command-palette-queryaction-fulltext-search-description' ).text(),
 			icon: cdxIconArticleSearch,
 			showItem: true,
-			getUrl: ( query ) => mw.util.getUrl( 'Special:Search', { search: query } )
+			getUrl: ( query ) => mw.util.getUrl( 'Special:Search', { search: query, fulltext: 1 } )
 		},
 		{
 			id: 'media-search',
